@@ -1,0 +1,4 @@
+docbr==0.1.3
+numpy==1.24.2
+pywin32==305
+win32printing==0.1.3
