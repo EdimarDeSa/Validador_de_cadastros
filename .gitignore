@@ -41,3 +41,5 @@ compilado/
 *.bak
 csv_teste/
 icons/
+*.csv
+testes.py

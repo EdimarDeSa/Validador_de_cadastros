@@ -150,13 +150,16 @@ class Main(Tk):
         for cadastro in self.dicionario_csv:
             self.atualiza_progresso()
 
-            cpf_com_mascara = self.mascara_cpf(str(cadastro[STRING_COLUNA_CPF]))
-            
+            cpf_sem_mascara = f'{str(cadastro[STRING_COLUNA_CPF]).zfill(11)}'
+
+            cpf_com_mascara = self.mascara_cpf(cpf_sem_mascara)
+
             if cpf_com_mascara in ja_registrados:
                 self.atualiza_cadastros_repetidos()
                 continue
             
-            if not self.cpf_valido(cpf_com_mascara):
+            if not int(cpf_sem_mascara) or not self.cpf_valido(cpf_com_mascara):
+                self.atualiza_cpfs_invalidos()
                 continue
             
             nome_participante = ' '.join([nome.capitalize() for nome in cadastro[NOME_PARTICIPANTE].split()])
@@ -210,14 +213,14 @@ class Main(Tk):
         return porcentagem
 
     @staticmethod
-    def mascara_cpf(cpf_bruto):
-        return parse(doclist=cpf_bruto, doctype='cpf', mask=True)
+    def mascara_cpf(cpf_bruto: str) -> str:
+        cpf_com_mascara = parse(doclist=cpf_bruto, doctype='cpf', mask=True)
+        return cpf_com_mascara
 
-    def cpf_valido(self, cpf_com_mascara):
+    @staticmethod
+    def cpf_valido(cpf_com_mascara: str) -> bool:
         validado = validate(doclist=cpf_com_mascara, doctype='cpf', lazy=False)
-        if not validado:
-            self.atualiza_cpfs_invalidos()
-        return validado
+        return bool(validado)
 
     def verifica_vez_da_impressora(self):
         def inverte_impressora_da_vez():
