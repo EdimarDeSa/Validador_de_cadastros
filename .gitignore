@@ -43,3 +43,5 @@ csv_teste/
 icons/
 *.csv
 testes.py
+data/
+*.spec
