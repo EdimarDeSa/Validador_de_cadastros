@@ -8,12 +8,13 @@ from tkinter.messagebox import showinfo, askyesno, showerror
 from docbr import parse, validate
 import pandas as pd
 
-from Modulos import CPF, VALIDADE_CPF, NOME, DUPLICADA, COLABORADOR
+from Modulos import CPF, VALIDADE_CPF, NOME, DUPLICADA, COLABORADOR, COLUNAS_SERVICO_IMPRESSORAS
 from Modulos.arquivo import AbreArquivo
 from Modulos.imprimir import Impressao
 from Modulos.configs import Configuracoes
 from Modulos.log_panel import LogPanel
 from Modulos.place_holder import PlaceHolderEntry
+from Modulos.funcoes_main import limpeza_de_dados, capitaliza_nome, calcula_tempo_de_impressao_total, calc_linha, calc_coluna
 
 
 class Main(Tk):
@@ -26,7 +27,6 @@ class Main(Tk):
 
     def __init__(self):
         Tk.__init__(self)
-
         self.configuracoes = Configuracoes(self)
         self.arquivos = AbreArquivo()
         self.impressao = Impressao()
@@ -68,39 +68,39 @@ class Main(Tk):
 
     def inicia_labels(self, master):
         Label(text='Selecione a impressora 1:', **self.configuracoes.label_parametros, master=master
-              ).place(relx=self.calc_coluna(1), rely=self.calc_linha(1))
+              ).place(relx=calc_coluna(1), rely=calc_linha(1))
 
         Label(
             text='Selecione a impressora 2:', **self.configuracoes.label_parametros, master=master
-        ).place(relx=self.calc_coluna(3), rely=self.calc_linha(1))
+        ).place(relx=calc_coluna(3), rely=calc_linha(1))
 
         Label(textvariable=self.var_total_de_cadastros, **self.configuracoes.label_parametros, master=master
-              ).place(relx=self.calc_coluna(1), rely=self.calc_linha(2))
+              ).place(relx=calc_coluna(1), rely=calc_linha(2))
 
         Label(textvariable=self.var_participantes_validos, **self.configuracoes.label_parametros, master=master
-              ).place(relx=self.calc_coluna(2), rely=self.calc_linha(2))
+              ).place(relx=calc_coluna(2), rely=calc_linha(2))
 
         Label(textvariable=self.var_cadastros_repetidos, **self.configuracoes.label_parametros, master=master
-              ).place(relx=self.calc_coluna(3), rely=self.calc_linha(2))
+              ).place(relx=calc_coluna(3), rely=calc_linha(2))
 
         Label(textvariable=self.var_cpfs_invalidos, **self.configuracoes.label_parametros, master=master
-              ).place(relx=self.calc_coluna(4), rely=self.calc_linha(2))
+              ).place(relx=calc_coluna(4), rely=calc_linha(2))
 
         Label(textvariable=self.var_colaboradores_cadastrados, **self.configuracoes.label_parametros, master=master
-              ).place(relx=self.calc_coluna(1), rely=self.calc_linha(3))
+              ).place(relx=calc_coluna(1), rely=calc_linha(3))
 
         Label(textvariable=self.var_caminho_inscritos, **self.configuracoes.label_parametros, master=master
-              ).place(relx=self.calc_coluna(1), rely=self.calc_linha(4) + 0.01)
+              ).place(relx=calc_coluna(1), rely=calc_linha(4) + 0.01)
 
         Label(textvariable=self.var_caminho_colaboradores, **self.configuracoes.label_parametros, master=master
-              ).place(relx=self.calc_coluna(1), rely=self.calc_linha(5) + 0.01)
+              ).place(relx=calc_coluna(1), rely=calc_linha(5) + 0.01)
 
         Label(textvariable=self.var_cpf_sorteado, master=master, **self.configuracoes.label_parametros
-              ).place(relx=self.calc_coluna(1), rely=self.calc_linha(7))
+              ).place(relx=calc_coluna(1), rely=calc_linha(7))
 
         Label(textvariable=self.var_vencedor_registrado, master=master, **self.configuracoes.label_parametros,
               name='label_vencedor'
-              ).place(relx=self.calc_coluna(1), rely=self.calc_linha(9))
+              ).place(relx=calc_coluna(1), rely=calc_linha(9))
 
     def inicia_entrys(self, master):
         placeholder = 'Digite o CPF: 00000000000 ou 000.000.000-00'
@@ -112,11 +112,11 @@ class Main(Tk):
 
         Combobox(
             values=lista_impressoras, name='impressora1', **self.configuracoes.combobox_parametros, master=master
-        ).place(relx=self.calc_coluna(2), rely=self.calc_linha(1), relwidth=0.23)
+        ).place(relx=calc_coluna(2), rely=calc_linha(1), relwidth=0.23)
 
         Combobox(
             values=lista_impressoras, name='impressora2', **self.configuracoes.combobox_parametros, master=master
-        ).place(relx=self.calc_coluna(4), rely=self.calc_linha(1), relwidth=0.23)
+        ).place(relx=calc_coluna(4), rely=calc_linha(1), relwidth=0.23)
 
         try:
             master.children['impressora1'].current(lista_impressoras.index('Brother QL-800 1'))
@@ -128,11 +128,11 @@ class Main(Tk):
     def inicia_buttons(self, master):
         Button(image=self.img_lupa, **self.configuracoes.buttons_parametros,
                command=lambda: self.abre_arquivo('inscritos'), master=master
-               ).place(relx=self.calc_coluna(4), rely=self.calc_linha(4))
+               ).place(relx=calc_coluna(4), rely=calc_linha(4))
 
         Button(image=self.img_lupa, **self.configuracoes.buttons_parametros,
                command=lambda: self.abre_arquivo('colaboradores'), master=master
-               ).place(relx=self.calc_coluna(4), rely=self.calc_linha(5))
+               ).place(relx=calc_coluna(4), rely=calc_linha(5))
 
         Button(command=self.verifica_cadastros, text='Verifica cadastros', name='bt_inicia_verificacao',
                **self.configuracoes.buttons_parametros, master=master)
@@ -170,14 +170,13 @@ class Main(Tk):
         self.var_total_de_cadastros.set(f'Total de cadastros: {self.df_inscricoes.shape[0]}')
         frame_children = self.frame_children
         frame_children['bt_inicia_impressao'].place_forget()
-        frame_children['bt_inicia_verificacao'].place(relx=self.calc_coluna(2), rely=self.calc_linha(6))
+        frame_children['bt_inicia_verificacao'].place(relx=calc_coluna(2), rely=calc_linha(6))
 
-    def verifica_cadastros(self):
-        self.df_inscricoes[CPF] = self.df_inscricoes[CPF].apply(lambda cpf: str(cpf).zfill(11))
+    def verifica_cadastros(self):            
+        self.df_inscricoes[CPF] = self.df_inscricoes[CPF].apply(lambda cpf: limpeza_de_dados(cpf))
 
         self.df_inscricoes = self.df_inscricoes.assign(**{
-            NOME: lambda df: df[NOME].apply(
-                lambda nome: ' '.join([nome_part.capitalize() for nome_part in nome.split()])),
+            NOME: lambda df: df[NOME].apply(lambda nome: capitaliza_nome(nome)),
             DUPLICADA: self.df_inscricoes.duplicated(subset=CPF, keep='last'),
             VALIDADE_CPF: lambda df: df.query(f'{DUPLICADA}==False')[CPF].apply(lambda cpf: validate(cpf, 'cpf')),
             CPF: lambda df: df.query(f'{VALIDADE_CPF}==True')[CPF].apply(lambda cpf: parse(cpf, 'cpf', mask=True)),
@@ -199,8 +198,7 @@ class Main(Tk):
 
         self.df_inscricoes_validas = inscricoes_validas
 
-        self.after(1000, lambda: self.frame_children['bt_inicia_impressao'].place(relx=self.calc_coluna(3),
-                                                                                  rely=self.calc_linha(6)))
+        self.after(1000, lambda: self.frame_children['bt_inicia_impressao'].place(relx=calc_coluna(3), rely=calc_linha(6)))
 
     def inicia_impressao(self):
         def imprime_inscrito(row):
@@ -227,9 +225,7 @@ class Main(Tk):
 
         jobs = [1]
         start_time = time()
-        colunas = ['JobId', 'pPrinterName', 'pMachineName', 'pUserName', 'pDocument', 'pDatatype', 'pStatus', 'Status',
-                   'Priority', 'Position', 'TotalPages', 'PagesPrinted']
-        df_jobs_em_andamento = pd.DataFrame(columns=colunas)
+        df_jobs_em_andamento = pd.DataFrame(columns=COLUNAS_SERVICO_IMPRESSORAS)
 
         while jobs:
             if not hasattr(self, 'log_panel'):
@@ -244,7 +240,7 @@ class Main(Tk):
 
             if df_jobs_update.shape[0]:
                 df_jobs_update.drop('Submitted', axis=1, inplace=True)
-                df_jobs_em_andamento = df_jobs_em_andamento.merge(df_jobs_update, on=colunas, how='outer')
+                df_jobs_em_andamento = df_jobs_em_andamento.merge(df_jobs_update, on=COLUNAS_SERVICO_IMPRESSORAS, how='outer')
                 df_jobs_em_andamento['Na_fila'] = df_jobs_em_andamento['JobId'].isin(df_jobs_update['JobId'])
                 for impressora in impressoras:
                     indice = impressoras.index(impressora)
@@ -253,11 +249,11 @@ class Main(Tk):
                     try:
                         self.log_panel.log_clear(indice)
                         if total_na_fila:
-                            time_string = self.__calcula_tempo(total_na_fila)
-                            self.log_panel.log_impressora(f'{impressora} - Tempo estimado: {time_string} minutos',
-                                                          indice)
-                            log['pDocument'].apply(
-                                lambda doc: self.log_panel.log_impressora(f'Imprimindo: {doc}', indice))
+
+                            tempo_de_impressao = calcula_tempo_de_impressao_total(total_na_fila)
+
+                            self.log_panel.log_impressora(f'{impressora} - Tempo estimado: {tempo_de_impressao} minutos', indice)
+                            log['pDocument'].apply(lambda doc: self.log_panel.log_impressora(f'Imprimindo: {doc}', indice))
                         else:
                             self.log_panel.log_impressora(f'{impressora} - Impressões finalizadas', indice)
                     except TclError:
@@ -280,9 +276,9 @@ class Main(Tk):
     def registra_vencedores(self):
         info = 'Para registrar o vencedor insira o CPF e depois clique em registrar'
         self.var_cpf_sorteado.set(info)
-        self.frame_children['entry_cpf_sorteado'].place(relx=self.calc_coluna(1), rely=self.calc_linha(8))
-        self.frame_children['bt_cpf_sorteado'].place(relx=self.calc_coluna(3), rely=self.calc_linha(8))
-        self.frame_children['bt_salva_vencedores'].place(relx=self.calc_coluna(4), rely=self.calc_linha(8))
+        self.frame_children['entry_cpf_sorteado'].place(relx=calc_coluna(1), rely=calc_linha(8))
+        self.frame_children['bt_cpf_sorteado'].place(relx=calc_coluna(3), rely=calc_linha(8))
+        self.frame_children['bt_salva_vencedores'].place(relx=calc_coluna(4), rely=calc_linha(8))
         self.df_vencedores = pd.DataFrame()
 
     def registra_vencedor(self):
@@ -297,27 +293,26 @@ class Main(Tk):
             self.after(2001, self.update_idletasks)
             self.after(2500, lambda: self.var_vencedor_registrado.set(f'Participante registrado com sucesso!'))
             self.after(2501, self.update_idletasks)
-            self.after(3000, lambda: self.var_vencedor_registrado.set(' '))
-            self.after(3001, self.update_idletasks)
-
+            self.after(6000, lambda: self.var_vencedor_registrado.set(' '))
+            self.after(6001, self.update_idletasks)
 
         def registra(cpf):
             dados_vencedor = self.df_inscricoes.query(f'{CPF}=="{cpf}" and {DUPLICADA}==False')
             if not dados_vencedor.shape[0]:
-                return showerror('CPF inexistente', f'O CPF {cpf} não existe na lista de impressos.'
-                                                    f' Verifique se foi digitado corretmente.')
+                return showerror('CPF inexistente',
+                                 f'O CPF {cpf} não existe na lista de impressos. Verifique se foi digitado corretmente.')
             self.df_vencedores = pd.concat([self.df_vencedores, dados_vencedor], ignore_index=True)
             entry.delete(0, 'end')
-            Thread(target=pisca, daemon=True).start()
+            Thread(target=pisca).start()
 
         entry = self.frame_children['entry_cpf_sorteado']
-        cpf = parse(entry.get(), 'cpf', mask=True)
-        if CPF not in self.df_vencedores.columns or not any(self.df_vencedores[CPF] == cpf):
-            registra(cpf)
+        cpf_do_vencedor = parse(entry.get(), 'cpf', mask=True)
+        if CPF not in self.df_vencedores.columns or not any(self.df_vencedores[CPF] == cpf_do_vencedor):
+            registra(cpf_do_vencedor)
         else:
             r = askyesno('Vencedor já registrado', 'Este vencedor já foi registrado, deseja registrá-lo novamente?')
             if r:
-                registra(cpf)
+                registra(cpf_do_vencedor)
             else:
                 return
 
@@ -330,13 +325,6 @@ class Main(Tk):
     def iniciar_binds(self):
         self.frame_children['entry_cpf_sorteado'].bind('<Return>', lambda e: self.registra_vencedor())
 
-    @staticmethod
-    def __calcula_tempo(quantidade: int):
-        total_seconds = (quantidade - 1) * 2
-        minutes = total_seconds // 60
-        seconds = total_seconds % 60
-        return f"{minutes}:{seconds:02}"
-
     @property
     def frame_children(self):
         return self.children['frame'].children
@@ -348,21 +336,6 @@ class Main(Tk):
     @property
     def impressora2(self):
         return self.frame_children['impressora2'].get()
-
-    @staticmethod
-    def calc_linha(linha):
-        step = 0.1
-        return 0.02 + ((linha - 1) * step)
-
-    @staticmethod
-    def calc_coluna(coluna):
-        colunas = {
-            1: 0.01,
-            2: 0.25,
-            3: 0.51,
-            4: 0.75
-        }
-        return colunas[coluna]
 
 
 if __name__ == '__main__':

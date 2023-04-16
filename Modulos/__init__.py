@@ -41,3 +41,6 @@ CPF: str = 'CPF'
 VALIDADE_CPF: str = 'Validade_cpf'
 DUPLICADA: str = 'Duplicada'
 COLABORADOR: str = 'Colaborador'
+
+
+COLUNAS_SERVICO_IMPRESSORAS = ['JobId', 'pPrinterName', 'pMachineName', 'pUserName', 'pDocument', 'pDatatype', 'pStatus', 'Status', 'Priority', 'Position', 'TotalPages', 'PagesPrinted']
