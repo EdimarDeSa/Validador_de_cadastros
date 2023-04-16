@@ -1,1 +1,1 @@
-pyinstaller "./main.py" -n "Analisador de cadastros" --specpath "./compilado" --path "./.venv/Lib/site-packages" -y --clean -F --distpath "./compilado" --workpath "./compilado/build" -w
+pyinstaller "Analisador_de_cadastros.spec" -y --distpath "./compilado/distribuicao" --workpath "./compilado/build" --clean

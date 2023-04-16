@@ -1,61 +1,66 @@
-from Modulos import DictReader, DictWriter, join, askopenfilename, dirname, basename, register_dialect, list_dialects
-from Modulos import EXTENSOES, QUOTE_NONE, STRING_COLUNA_CPF, CODECS, showwarning
+from os.path import dirname, join, exists
+from tkinter.filedialog import askopenfilename
+from tkinter.messagebox import showwarning
+import re
+from typing import Literal
+
+import pandas as pd
+from PIL import Image
+
+from Modulos import EXTENSOES, CPF, CODECS, SEPARADORES, EXTENSAO_DEFAULT
 
 
 class AbreArquivo:
-    def __init__(self):
-        self.__DIRETORIO_BASE = None
-        self.ARQUIVO_ATUAL = None
-        self.EXTENSAO_DEFAULT = '.csv'
-        self.DIALETO_USADO = None
-        self.TOTAL_DE_LINHAS = 0
+    __DIRETORIO_BASE = f'../{dirname(__file__)}'
+    DIALETO_USADO = None
+    caminho_imagem = 'icons/procurar.png'
 
-    def dicionariza_csv(self) -> DictReader:
-        diretorio_documento = self.__buscar_arquivo()
-        objeto_csv = self.__abre_csv(diretorio_documento)
-        self.TOTAL_DE_LINHAS = sum(1 for _ in objeto_csv)
-        objeto_csv.seek(0)
-        arquivo_dicionarizado = self.__verifica_dialeto(objeto_csv)
-        return arquivo_dicionarizado
-
-    def inicia_arquivo_filtrado(self, dicionario_csv):
-        caminho = join(self.__DIRETORIO_BASE, 'filtrado.csv')
-        file = open(file=caminho, mode='w', encoding='UTF-8')
-        arquivo_filtrado = DictWriter(file, fieldnames=dicionario_csv.fieldnames, dialect=self.DIALETO_USADO)
-        arquivo_filtrado.writeheader()
-        return arquivo_filtrado
-
-    def __buscar_arquivo(self) -> str:
-        diretorio_documento = askopenfilename(defaultextension=self.EXTENSAO_DEFAULT, filetypes=EXTENSOES,
-                                              initialdir=dirname(__file__), title='Selecione o arquivo')
-        self.__DIRETORIO_BASE = dirname(diretorio_documento)
-        self.ARQUIVO_ATUAL = basename(diretorio_documento)
+    def abre_documento(self) -> str:
+        diretorio_documento = askopenfilename(defaultextension=EXTENSAO_DEFAULT, filetypes=EXTENSOES,
+                                              initialdir=self.__DIRETORIO_BASE, title='Selecione o arquivo')
         return diretorio_documento
 
-    def __verifica_dialeto(self, file) -> DictReader:
-        register_dialect('ponto_virgula', delimiter=';', quoting=QUOTE_NONE)
-        for dialect in list_dialects():
-            dicionario_arquivo = DictReader(file, dialect=dialect)
-            if STRING_COLUNA_CPF in dicionario_arquivo.fieldnames:
-                self.DIALETO_USADO = dialect
-                return dicionario_arquivo
-            else:
-                file.seek(0)
+    @staticmethod
+    def salva_arquivo_filtrado(arquivo: pd.DataFrame, caminho: str, tipo: Literal["relatorio", "vencedores"]):
+        relatorios = {
+            'relatorio': 'relatorio_campanha.xlsx',
+            'vencedores': 'vencedores_campanha.xlsx'
+        }
+        caminho_para_salvar = join(dirname(caminho), relatorios[tipo])
+        arquivo.to_excel(caminho_para_salvar)
+        return caminho_para_salvar
 
     @staticmethod
-    def __abre_csv(diretorio_documento):
-        for codec in CODECS:
+    def abre_dataframe(diretorio_documento: str) -> pd.DataFrame:
+        def try_open_csv(encoding, sep):
             try:
-                objeto_csv = open(diretorio_documento, encoding=codec)
-                if STRING_COLUNA_CPF in objeto_csv.readline():
-                    objeto_csv.seek(0)
-                    return objeto_csv
-                objeto_csv.seek(0)
+                tipo_documento = re.findall(r'\.(\w+)', diretorio_documento)[0].lower()
+                df = None
 
-            except (UnicodeDecodeError, UnicodeError):
+                if tipo_documento == 'csv':
+                    df = pd.read_csv(diretorio_documento, encoding=encoding, dtype='string', sep=sep)
+                if tipo_documento == 'xlsx':
+                    df = pd.read_excel(diretorio_documento, dtype='string')
+                if tipo_documento == 'txt':
+                    df = pd.read_table(diretorio_documento, encoding=encoding, dtype='string', sep=sep)
+
+                if CPF in df.columns:
+                    return df
+
+            except UnicodeDecodeError or UnicodeError or pd.errors.ParserError as err:
                 pass
-                    
-        showwarning('Nenhum codec encontrado',
-                    F'Não foi possível achar o campo "{STRING_COLUNA_CPF}" com nenhum codec disponível')
-        
-        return None
+
+        for codec in CODECS:
+            for sep in SEPARADORES:
+                df = try_open_csv(codec, sep)
+                if df is not None:
+                    return df
+        showwarning('Nenhum codec encontrado', F'Não foi possível achar o campo "{CPF}" com nenhum codec disponível')
+        return pd.DataFrame()
+
+    def abre_imagem(self):
+        if not exists('icons/procurar_28x28.png'):
+            lupa = Image.open(self.caminho_imagem)
+            lupa_32 = lupa.resize((28, 28))
+            lupa_32.save('icons/procurar_28x28.png')
+        return 'icons/procurar_28x28.png'

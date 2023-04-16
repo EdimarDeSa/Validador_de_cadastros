@@ -1,4 +1,5 @@
-from Modulos import ClosePrinter, EnumJobs, EnumPrinters, OpenPrinter, Printer
+from win32print import ClosePrinter, EnumJobs, EnumPrinters, OpenPrinter
+from win32printing import Printer
 
 
 class Impressao:
@@ -22,15 +23,14 @@ class Impressao:
             printer.text(f"Nome: {nome}", font_config=fonte_nome)
 
     @staticmethod
-    def printer_job_checker(printer_name: str) -> list[str]:
-        jobs = list()
-        phandle = OpenPrinter(printer_name)
-        try:
-            print_jobs = EnumJobs(phandle, 0, -1)
-            if print_jobs:
-                jobs = [job['pDocument'] for job in print_jobs]
-            else:
-                jobs = ['Impressões finalizadas']
-        finally:
-            ClosePrinter(phandle)
-        return jobs
+    def printer_job_checker(printer_list: list) -> list[dict]:
+        jobs_list = list()
+        jobs = None
+        for printer_name in printer_list:
+            phandle = OpenPrinter(printer_name)
+            try:
+                jobs = EnumJobs(phandle, 0, -1)
+            finally:
+                jobs_list.extend(list(jobs))
+                ClosePrinter(phandle)
+        return jobs_list
