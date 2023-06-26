@@ -2,31 +2,25 @@ from os.path import dirname, join, exists
 from tkinter.filedialog import askopenfilename
 from tkinter.messagebox import showwarning
 import re
-from typing import Literal
 
 import pandas as pd
-from PIL import Image
+from pandas.errors import ParserError
 
 from Modulos import EXTENSOES, CPF, CODECS, SEPARADORES, EXTENSAO_DEFAULT
 
+DIRETORIO_BASE = f'../{dirname(__file__)}'
+
 
 class AbreArquivo:
-    __DIRETORIO_BASE = f'../{dirname(__file__)}'
-    DIALETO_USADO = None
-    caminho_imagem = 'icons/procurar.png'
-
-    def abre_documento(self) -> str:
+    def abre_documento(self, titulo='') -> str:
         diretorio_documento = askopenfilename(defaultextension=EXTENSAO_DEFAULT, filetypes=EXTENSOES,
-                                              initialdir=self.__DIRETORIO_BASE, title='Selecione o arquivo')
+                                              initialdir=DIRETORIO_BASE, title='Selecione o arquivo')
         return diretorio_documento
 
     @staticmethod
-    def salva_arquivo_filtrado(arquivo: pd.DataFrame, caminho: str, tipo: Literal["relatorio", "vencedores"]):
-        relatorios = {
-            'relatorio': 'relatorio_campanha.xlsx',
-            'vencedores': 'vencedores_campanha.xlsx'
-        }
-        caminho_para_salvar = join(dirname(caminho), relatorios[tipo])
+    def salva_arquivo_filtrado(arquivo: pd.DataFrame, caminho: str, tipo: str):
+        nome_documento = tipo + '.xlsx'
+        caminho_para_salvar = join(dirname(caminho), nome_documento)
         arquivo.to_excel(caminho_para_salvar)
         return caminho_para_salvar
 
@@ -36,7 +30,6 @@ class AbreArquivo:
             try:
                 tipo_documento = re.findall(r'\.(\w+)', diretorio_documento)[0].lower()
                 df = None
-
                 if tipo_documento == 'csv':
                     df = pd.read_csv(diretorio_documento, encoding=encoding, dtype='string', sep=sep)
                 if tipo_documento == 'xlsx':
@@ -47,7 +40,13 @@ class AbreArquivo:
                 if CPF in df.columns:
                     return df
 
-            except UnicodeDecodeError or UnicodeError or pd.errors.ParserError as err:
+            except UnicodeDecodeError:
+                pass
+
+            except UnicodeError:
+                pass
+
+            except ParserError:
                 pass
 
         for codec in CODECS:
@@ -57,10 +56,3 @@ class AbreArquivo:
                     return df
         showwarning('Nenhum codec encontrado', F'Não foi possível achar o campo "{CPF}" com nenhum codec disponível')
         return pd.DataFrame()
-
-    def abre_imagem(self):
-        if not exists('icons/procurar_28x28.png'):
-            lupa = Image.open(self.caminho_imagem)
-            lupa_32 = lupa.resize((28, 28))
-            lupa_32.save('icons/procurar_28x28.png')
-        return 'icons/procurar_28x28.png'

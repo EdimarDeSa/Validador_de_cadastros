@@ -1,13 +1,14 @@
 from tkinter import Tk
+from customtkinter import CTkFont
 
 
 class Configuracoes:
     __cor_da_borda = 'green'
     __cor_de_fundo = 'lightgreen'
     __estilo_de_fonte = 'Roboto'
-    __tamanho_fonte_p = '10'
-    __tamanho_fonte_m = '12'
-    __tamanho_fonte_g = '15'
+    __tamanho_fonte_p = 10
+    __tamanho_fonte_m = 12
+    __tamanho_fonte_g = 15
     __negrito = 'bold'
     __cor_da_fonte = 'black'
 
@@ -38,47 +39,45 @@ class Configuracoes:
     @property
     def __root_parametros(self) -> dict:
         parametros = {
-            'background': self.__cor_da_borda,
+            # 'background': self.__cor_da_borda,
         }
         return parametros
 
     @property
     def __frame_parametros(self) -> dict:
         parametros = {
-            'background': self.__cor_de_fundo,
+            # 'background': self.__cor_de_fundo,
         }
         return parametros
 
     @property
     def __label_parametros(self) -> dict:
         parametros = {
-            'font': f'{self.__estilo_de_fonte} {self.__tamanho_fonte_p} {self.__negrito}',
-            'foreground': self.__cor_da_fonte,
-            'background': self.__cor_de_fundo,
+            'font': CTkFont(family=self.__estilo_de_fonte, size=self.__tamanho_fonte_m, weight='bold'),
         }
         return parametros
 
     @property
     def __combobox_parametros(self) -> dict:
         parametros = {
-            'foreground': self.__cor_da_fonte,
-            'background': self.__cor_de_fundo,
+            # 'foreground': self.__cor_da_fonte,
+            # 'background': self.__cor_de_fundo,
         }
         return parametros
 
     @property
     def __progress_bar_parametros(self) -> dict:
         parametros = {
-            'orient': 'horizontal',
-            'mode': 'determinate',
-            'value': 0,
+            # 'orient': 'horizontal',
+            # 'mode': 'determinate',
+            # 'value': 0,
         }
         return parametros
 
     @property
     def __buttons_parametros(self) -> dict:
         parametros = {
-            'font': f'{self.__estilo_de_fonte} {self.__tamanho_fonte_p}',
+            'font': CTkFont(self.__estilo_de_fonte, self.__tamanho_fonte_p),
         }
         return parametros
 
@@ -86,6 +85,6 @@ class Configuracoes:
     def __entry_parametros(self) -> dict:
         parametros = {
             'font': f'{self.__estilo_de_fonte} {self.__tamanho_fonte_p}',
-            'fg': self.__cor_da_fonte
+            # 'fg': self.__cor_da_fonte
         }
         return parametros

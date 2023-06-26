@@ -1,46 +1,34 @@
 from threading import Thread
-from time import time, sleep
 
-from tkinter import Button, Frame, Label, StringVar, Tk, PhotoImage, TclError
-from tkinter.ttk import Combobox
-from tkinter.messagebox import showinfo, askyesno, showerror
+from tkinter.messagebox import showinfo, showerror
+import validate_docbr as vdb
+import customtkinter as ctk
+from tkinter import StringVar
+from PIL import Image
 
-from docbr import parse, validate
-import pandas as pd
-
-from Modulos import CPF, VALIDADE_CPF, NOME, DUPLICADA, COLABORADOR, COLUNAS_SERVICO_IMPRESSORAS
-from Modulos.arquivo import AbreArquivo
 from Modulos.imprimir import Impressao
 from Modulos.configs import Configuracoes
 from Modulos.log_panel import LogPanel
-from Modulos.place_holder import PlaceHolderEntry
-from Modulos.funcoes_main import limpeza_de_dados, capitaliza_nome, calcula_tempo_de_impressao_total, calc_linha, calc_coluna
+from Modulos.funcoes_main import calc_linha, calc_coluna
+from Modulos.models import Tabelas
 
 
-class Main(Tk):
-    impressora_da_vez: bool = True
-    df_inscricoes: pd.DataFrame
-    df_inscricoes_validas: pd.DataFrame
-    df_colaboradores: pd.DataFrame
-    df_vencedores: pd.DataFrame
-    img_lupa: PhotoImage
-
+class Main(ctk.CTk):
     def __init__(self):
-        Tk.__init__(self)
+        ctk.CTk.__init__(self)
         self.configuracoes = Configuracoes(self)
-        self.arquivos = AbreArquivo()
         self.impressao = Impressao()
+        self.tabelas = Tabelas()
 
         self.var_total_de_cadastros = StringVar(value=f'Total de cadastros: -')
-        self.var_participantes_validos = StringVar(value=f'Participantes válidos: -')
+        self.var_inscricoes_validas = StringVar(value=f'Participantes válidos: -')
         self.var_cadastros_repetidos = StringVar(value=f'Cadastros repetidos: -')
         self.var_cpfs_invalidos = StringVar(value=f'CPFs inválidos: -')
         self.var_colaboradores_cadastrados = StringVar(value=f'Colaboradores cadasrtados: -')
-        self.var_caminho_inscritos = StringVar(value='CSV inscritos')
-        self.var_caminho_colaboradores = StringVar(value='CSV colaboradores')
+        self.var_caminho_inscritos = StringVar(value='Arquivo inscritos')
+        self.var_caminho_colaboradores = StringVar(value='Arquivo colaboradores')
         self.var_cpf_sorteado = StringVar()
         self.var_vencedor_registrado = StringVar()
-        self.img_lupa = PhotoImage(file=self.arquivos.abre_imagem())
 
         self.iniciar_root()
         self.inicia_widgets()
@@ -54,222 +42,147 @@ class Main(Tk):
         self.resizable(False, False)
         self.geometry(f'{self.configuracoes.largura_da_tela}x{self.configuracoes.altura_da_tela}'
                       f'+{self.configuracoes.posicao_x}+{self.configuracoes.posicao_y}')
-
-        self.configuracoes.frame_parametros.update({'master': self})
+        ctk.set_default_color_theme('green')
+        ctk.set_appearance_mode('light')
 
     def inicia_widgets(self):
-        frame = Frame(**self.configuracoes.frame_parametros, name='frame')
-        frame.place(relheight=0.98, relwidth=0.98, relx=0.01, rely=0.01)
+        self.notebook = ctk.CTkTabview(self)
+        self.notebook.pack(fill="both", expand=True)
+        tab_impressao = self.notebook.add('Impressao')
 
-        self.inicia_labels(frame)
-        self.inicia_entrys(frame)
-        self.inicia_combobox(frame)
-        self.inicia_buttons(frame)
+        # frame_sorteios = ctk.CTkFrame(master=self.notebook, **self.configuracoes.frame_parametros, name='frame_sorteios')
+        # self.inicia_frame_sorteios_widgets(frame_sorteios)
+        # self.notebook.add(frame_sorteios, state='hidden', text='Registro de sorteios')
 
-    def inicia_labels(self, master):
-        Label(text='Selecione a impressora 1:', **self.configuracoes.label_parametros, master=master
-              ).place(relx=calc_coluna(1), rely=calc_linha(1))
+        frame_impressao = ctk.CTkFrame(master=tab_impressao, **self.configuracoes.frame_parametros)
+        frame_impressao.pack(fill='both', expand=True)
+        frame_impressao.columnconfigure([0, 1, 2], minsize=250)
+        frame_impressao.columnconfigure(3, minsize=50)
+        self.inicia_frame_impressao_widgets(frame_impressao)
 
-        Label(
-            text='Selecione a impressora 2:', **self.configuracoes.label_parametros, master=master
-        ).place(relx=calc_coluna(3), rely=calc_linha(1))
-
-        Label(textvariable=self.var_total_de_cadastros, **self.configuracoes.label_parametros, master=master
-              ).place(relx=calc_coluna(1), rely=calc_linha(2))
-
-        Label(textvariable=self.var_participantes_validos, **self.configuracoes.label_parametros, master=master
-              ).place(relx=calc_coluna(2), rely=calc_linha(2))
-
-        Label(textvariable=self.var_cadastros_repetidos, **self.configuracoes.label_parametros, master=master
-              ).place(relx=calc_coluna(3), rely=calc_linha(2))
-
-        Label(textvariable=self.var_cpfs_invalidos, **self.configuracoes.label_parametros, master=master
-              ).place(relx=calc_coluna(4), rely=calc_linha(2))
-
-        Label(textvariable=self.var_colaboradores_cadastrados, **self.configuracoes.label_parametros, master=master
-              ).place(relx=calc_coluna(1), rely=calc_linha(3))
-
-        Label(textvariable=self.var_caminho_inscritos, **self.configuracoes.label_parametros, master=master
-              ).place(relx=calc_coluna(1), rely=calc_linha(4) + 0.01)
-
-        Label(textvariable=self.var_caminho_colaboradores, **self.configuracoes.label_parametros, master=master
-              ).place(relx=calc_coluna(1), rely=calc_linha(5) + 0.01)
-
-        Label(textvariable=self.var_cpf_sorteado, master=master, **self.configuracoes.label_parametros
-              ).place(relx=calc_coluna(1), rely=calc_linha(7))
-
-        Label(textvariable=self.var_vencedor_registrado, master=master, **self.configuracoes.label_parametros,
-              name='label_vencedor'
-              ).place(relx=calc_coluna(1), rely=calc_linha(9))
-
-    def inicia_entrys(self, master):
-        placeholder = 'Digite o CPF: 00000000000 ou 000.000.000-00'
-        PlaceHolderEntry(master=master, placeholder=placeholder, name='entry_cpf_sorteado', width=len(placeholder),
-                         **self.configuracoes.entry_parametros)
-
-    def inicia_combobox(self, master):
+        # frame_graficos = Frame(master=self.notebook, **self.configuracoes.frame_parametros, name='frame_graficos')
+        # self.notebook.add(frame_graficos, state='hidden', text='Graficos')
+    
+    # def inicia_frame_sorteios_widgets(self, master):
+    #     Label(master=master, text='Sorteio:', **self.configuracoes.label_parametros, ).place(relx=calc_coluna(1), rely=calc_linha(1))
+        
+    def inicia_frame_impressao_widgets(self, master):
         lista_impressoras = self.impressao.listar_impressoras()
+        ctk.CTkLabel(master, text='Selecione a impressora 1:', **self.configuracoes.label_parametros
+                     ).grid(row=0, column=0, padx=5, pady=5)
+        ctk.CTkComboBox(master, values=lista_impressoras, command=self.on_select).grid(row=0, column=1, padx=5, pady=5)
 
-        Combobox(
-            values=lista_impressoras, name='impressora1', **self.configuracoes.combobox_parametros, master=master
-        ).place(relx=calc_coluna(2), rely=calc_linha(1), relwidth=0.23)
+        ctk.CTkLabel(master, text='Selecione a impressora 2:', **self.configuracoes.label_parametros
+                     ).grid(row=0, column=2, padx=5, pady=5)
+        ctk.CTkComboBox(master, values=lista_impressoras, command=self.on_select).grid(row=0, column=3, padx=5, pady=5)
 
-        Combobox(
-            values=lista_impressoras, name='impressora2', **self.configuracoes.combobox_parametros, master=master
-        ).place(relx=calc_coluna(4), rely=calc_linha(1), relwidth=0.23)
+        ctk.CTkLabel(master, textvariable=self.var_total_de_cadastros, **self.configuracoes.label_parametros
+                     ).grid(row=1, column=0, padx=5, pady=5)
 
-        try:
-            master.children['impressora1'].current(lista_impressoras.index('Brother QL-800 1'))
-            master.children['impressora2'].current(lista_impressoras.index('Brother QL-800 2'))
+        ctk.CTkLabel(master, textvariable=self.var_inscricoes_validas, **self.configuracoes.label_parametros
+                     ).grid(row=1, column=1, padx=5, pady=5)
 
-        except IndexError:
-            pass
+        ctk.CTkLabel(master, textvariable=self.var_cadastros_repetidos, **self.configuracoes.label_parametros
+                     ).grid(row=1, column=2, padx=5, pady=5)
 
-    def inicia_buttons(self, master):
-        Button(image=self.img_lupa, **self.configuracoes.buttons_parametros,
-               command=lambda: self.abre_arquivo('inscritos'), master=master
-               ).place(relx=calc_coluna(4), rely=calc_linha(4))
+        ctk.CTkLabel(master, textvariable=self.var_cpfs_invalidos, **self.configuracoes.label_parametros
+                     ).grid(row=1, column=3, padx=5, pady=5)
 
-        Button(image=self.img_lupa, **self.configuracoes.buttons_parametros,
-               command=lambda: self.abre_arquivo('colaboradores'), master=master
-               ).place(relx=calc_coluna(4), rely=calc_linha(5))
+        ctk.CTkLabel(master, textvariable=self.var_colaboradores_cadastrados, **self.configuracoes.label_parametros
+                     ).grid(row=2, column=0, padx=5, pady=5)
 
-        Button(command=self.verifica_cadastros, text='Verifica cadastros', name='bt_inicia_verificacao',
-               **self.configuracoes.buttons_parametros, master=master)
+        ctk.CTkLabel(master, textvariable=self.var_caminho_inscritos, **self.configuracoes.label_parametros
+                     ).grid(row=3, column=0, columnspan=3, padx=5, pady=5, sticky='w')
 
-        Button(command=self.inicia_verificacao, text='Iniciar impressão', name='bt_inicia_impressao',
-               **self.configuracoes.buttons_parametros, master=master)
+        ctk.CTkButton(master, image=self.img_lupa(), **self.configuracoes.buttons_parametros, text='', width=28,
+                      command=self.abre_tb_inscritos).grid(row=3, column=3, padx=5, pady=5)
 
-        Button(text='Registrar vencedor', **self.configuracoes.buttons_parametros, name='bt_cpf_sorteado',
-               command=self.registra_vencedor, master=master)
+        ctk.CTkLabel(master, textvariable=self.var_caminho_colaboradores, **self.configuracoes.label_parametros
+                     ).grid(row=4, column=0, columnspan=3, padx=5, pady=5, sticky='w')
 
-        Button(text='Salva vencedores', **self.configuracoes.buttons_parametros, name='bt_salva_vencedores',
-               command=self.salva_vencedores, master=master)
+        ctk.CTkButton(master, image=self.img_lupa(), **self.configuracoes.buttons_parametros, text='', width=28,
+                      command=self.abre_tb_colaboradores).grid(row=4, column=3, padx=5, pady=5)
 
-    def abre_arquivo(self, arquivo):
-        caminho = self.arquivos.abre_documento()
-        if caminho == '':
+        self.bt_inicia_verificacao = ctk.CTkButton(master, command=self.verifica_cadastros, text='Verifica cadastros',
+                                                   **self.configuracoes.buttons_parametros)
+
+        self.bt_inicia_impressao = ctk.CTkButton(master, command=self.inicia_thread_impressao, text='Iniciar impressão',
+                                                 **self.configuracoes.buttons_parametros)
+
+        self.bt_cpf_sorteado = ctk.CTkButton(text='Registrar vencedor', **self.configuracoes.buttons_parametros,
+                                             command=self.registra_vencedor, master=master)
+
+        self.bt_salva_vencedores = ctk.CTkButton(text='Salva vencedores', **self.configuracoes.buttons_parametros,
+                                                 command=self.salva_vencedores, master=master)
+
+        # ctk.CTkLabel(master, textvariable=self.var_cpf_sorteado, **self.configuracoes.label_parametros
+        #              ).grid(row=5, column=2, padx=5, pady=5)
+        #
+        # ctk.CTkLabel(master, textvariable=self.var_vencedor_registrado, **self.configuracoes.label_parametros
+        #              ).place(relx=calc_coluna(1), rely=calc_linha(9))
+
+        # placeholder = 'Digite o CPF: 00000000000 ou 000.000.000-00'
+        # PlaceHolderEntry(master=master, placeholder=placeholder, name='entry_cpf_sorteado', width=len(placeholder),
+        #                  **self.configuracoes.entry_parametros)
+        #
+    
+    def abre_tb_inscritos(self):
+        self.tabelas.inicia_tb_inscritos()
+
+        caminho = self.tabelas.get_caminho_tb_inscritos
+        if not caminho:
             return
 
-        df = self.arquivos.abre_dataframe(caminho)
-        if arquivo == 'inscritos':
-            self.df_inscricoes = df
-            self.var_caminho_inscritos.set(caminho)
-            self.df_inscricoes_validas = pd.DataFrame(columns=df.columns)
-            self.registra_informacoes()
+        self.var_caminho_inscritos.set(self.ajusta_caminho(caminho))
+        self.var_total_de_cadastros.set(f'Total de cadastros: {self.tabelas.get_total_inscritos}')
+
+        self.bt_inicia_impressao.grid_forget()
+        self.bt_inicia_verificacao.grid(row=6, column=0)
 
     def abre_tb_colaboradores(self):
         self.tabelas.inicia_tb_colaboradores()
-        self.var_caminho_colaboradores.set()
 
-    def inicia_verificacao(self):
+        caminho = self.tabelas.get_caminho_tb_colaboradores
+        if not caminho:
+            return
+
+        self.var_caminho_colaboradores.set(self.ajusta_caminho(caminho))
+
+    def verifica_cadastros(self):
+        self.tabelas.verifica_cadastros()
+        
+        self.var_cadastros_repetidos.set(f'Cadastros repetidos: {self.tabelas.get_total_cadastros_repetidos}')
+        
+        self.var_cpfs_invalidos.set(f'CPFs inválidos: {self.tabelas.get_total_cpfs_invalidos}')
+        
+        self.var_colaboradores_cadastrados.set(f'Colaboradores cadasrtados: '
+                                               f'{self.tabelas.get_total_colaboradores_cadastrados}')
+        
+        self.var_inscricoes_validas.set(f'Participantes válidos: {self.tabelas.get_total_inscricoes_validas}')
+
+        self.after(500, lambda: self.bt_inicia_impressao.grid(row=6, column=1))
+
+    def inicia_thread_impressao(self):
+        if not self.impressao.get_lista_de_impresoras_em_uso():
+            return showinfo('Impressora', 'Selecione uma impressora.')
+
         Thread(target=self.inicia_impressao, daemon=True).start()
-        self.frame_children['bt_inicia_impressao'].place_forget()
-
-    def registra_informacoes(self):
-        self.var_total_de_cadastros.set(f'Total de cadastros: {self.df_inscricoes.shape[0]}')
-        frame_children = self.frame_children
-        frame_children['bt_inicia_impressao'].place_forget()
-        frame_children['bt_inicia_verificacao'].place(relx=calc_coluna(2), rely=calc_linha(6))
-
-    def verifica_cadastros(self):            
-        self.df_inscricoes[CPF] = self.df_inscricoes[CPF].apply(lambda cpf: limpeza_de_dados(cpf))
-
-        self.df_inscricoes = self.df_inscricoes.assign(**{
-            NOME: lambda df: df[NOME].apply(lambda nome: capitaliza_nome(nome)),
-            DUPLICADA: self.df_inscricoes.duplicated(subset=CPF, keep='last'),
-            VALIDADE_CPF: lambda df: df.query(f'{DUPLICADA}==False')[CPF].apply(lambda cpf: validate(cpf, 'cpf')),
-            CPF: lambda df: df.query(f'{VALIDADE_CPF}==True')[CPF].apply(lambda cpf: parse(cpf, 'cpf', mask=True)),
-            COLABORADOR: lambda df: df[CPF].isin(self.df_colaboradores[CPF])
-        })
-
-        num_cadastros_repetidos = (self.df_inscricoes[DUPLICADA] == True).sum()
-        self.var_cadastros_repetidos.set(f'Cadastros repetidos: {num_cadastros_repetidos}')
-
-        num_cpfs_invalidos = (self.df_inscricoes[VALIDADE_CPF] == False).sum()
-        self.var_cpfs_invalidos.set(f'CPFs inválidos: {num_cpfs_invalidos}')
-
-        num_colaboradores_cadastrados = (self.df_inscricoes[COLABORADOR] == True).sum()
-        self.var_colaboradores_cadastrados.set(f'Colaboradores cadasrtados: {num_colaboradores_cadastrados}')
-
-        inscricoes_validas = self.df_inscricoes.query(f'{VALIDADE_CPF} == True and {COLABORADOR} == False')
-        num_inscricoes_validas = inscricoes_validas.shape[0]
-        self.var_participantes_validos.set(f'Participantes válidos: {num_inscricoes_validas}')
-
-        self.df_inscricoes_validas = inscricoes_validas
-
-        self.after(1000, lambda: self.frame_children['bt_inicia_impressao'].place(relx=calc_coluna(3), rely=calc_linha(6)))
+        self.bt_inicia_impressao.grid_forget()
 
     def inicia_impressao(self):
-        def imprime_inscrito(row):
-            nome_participante = row[NOME]
-            cpf = row[CPF]
-            impressora = self.verifica_vez_da_impressora()
-            self.impressao.imprimir(cpf, nome_participante, impressora)
+        log_panel = LogPanel(self.impressao, self.tabelas, self.configuracoes.label_parametros)
+        log_panel.start_monitoramento()
+        self.impressao.enviar_tabela_para_impressora(self.tabelas.get_tb_inscricoes_validas)
+        # Thread(target=self.exporta_relatorio).start()
 
-        Thread(target=self.inicia_relatorio).start()
-
-        self.df_inscricoes_validas.apply(imprime_inscrito, axis=1)
-
-    def verifica_vez_da_impressora(self):
-        if not self.impressora2:
-            return self.impressora1
-
-        self.impressora_da_vez = not self.impressora_da_vez
-        return self.impressora1 if self.impressora_da_vez else self.impressora2
-
-    def inicia_relatorio(self):
-        impressoras = [self.impressora1]
-        if self.impressora2:
-            impressoras.append(self.impressora2)
-
-        jobs = [1]
-        start_time = time()
-        df_jobs_em_andamento = pd.DataFrame(columns=COLUNAS_SERVICO_IMPRESSORAS)
-
-        while jobs:
-            if not hasattr(self, 'log_panel'):
-                self.log_panel = LogPanel(master=self, kw=self.configuracoes.label_parametros)
-
-            elapsed_time = time() - start_time
-            time_to_wait = max(0, int(2 - elapsed_time))
-            sleep(time_to_wait)
-
-            jobs = self.impressao.printer_job_checker(printer_list=impressoras)
-            df_jobs_update = pd.DataFrame(jobs)
-
-            if df_jobs_update.shape[0]:
-                df_jobs_update.drop('Submitted', axis=1, inplace=True)
-                df_jobs_em_andamento = df_jobs_em_andamento.merge(df_jobs_update, on=COLUNAS_SERVICO_IMPRESSORAS, how='outer')
-                df_jobs_em_andamento['Na_fila'] = df_jobs_em_andamento['JobId'].isin(df_jobs_update['JobId'])
-                for impressora in impressoras:
-                    indice = impressoras.index(impressora)
-                    log = df_jobs_em_andamento.query(f'pPrinterName=="{impressora}" and Na_fila==True')
-                    total_na_fila = log.shape[0]
-                    try:
-                        self.log_panel.log_clear(indice)
-                        if total_na_fila:
-
-                            tempo_de_impressao = calcula_tempo_de_impressao_total(total_na_fila)
-
-                            self.log_panel.log_impressora(f'{impressora} - Tempo estimado: {tempo_de_impressao} minutos', indice)
-                            log['pDocument'].apply(lambda doc: self.log_panel.log_impressora(f'Imprimindo: {doc}', indice))
-                        else:
-                            self.log_panel.log_impressora(f'{impressora} - Impressões finalizadas', indice)
-                    except TclError:
-                        del self.log_panel
-                        break
-                    except AttributeError:
-                        break
-
-            start_time = time()
-
-        self.log_panel.destroy()
+    def exporta_relatorio(self):
+        while self.log_panel.monitorando:
+            pass
         showinfo('Fim das impressões', 'Impressões finalizadas.')
 
         caminho = self.var_caminho_inscritos.get()
-        relatorio = self.arquivos.salva_arquivo_filtrado(self.df_inscricoes, caminho, 'relatorio')
-        showinfo('Relatorio da campanha', f'Foi gerado um relatório da campanha em: {relatorio}')
+        relatorio = self.tabelas.salva_tabela('tb_inscricoes_validas', caminho)
+        showinfo('Relatorio do sorteio', f'Foi gerado um relatório do sorteio em: {relatorio}')
 
         self.registra_vencedores()
 
@@ -279,63 +192,50 @@ class Main(Tk):
         self.frame_children['entry_cpf_sorteado'].place(relx=calc_coluna(1), rely=calc_linha(8))
         self.frame_children['bt_cpf_sorteado'].place(relx=calc_coluna(3), rely=calc_linha(8))
         self.frame_children['bt_salva_vencedores'].place(relx=calc_coluna(4), rely=calc_linha(8))
-        self.df_vencedores = pd.DataFrame()
+        self.tabelas.inicia_tb_vencedores()
 
     def registra_vencedor(self):
         def pisca():
-            self.after(500, lambda: self.var_vencedor_registrado.set(f'Participante registrado com sucesso!'))
-            self.after(501, self.update_idletasks)
-            self.after(1000, lambda: self.var_vencedor_registrado.set(' '))
-            self.after(1001, self.update_idletasks)
-            self.after(1500, lambda: self.var_vencedor_registrado.set(f'Participante registrado com sucesso!'))
-            self.after(1501, self.update_idletasks)
+            self.var_vencedor_registrado.set(f'Participante registrado com sucesso!')
             self.after(2000, lambda: self.var_vencedor_registrado.set(' '))
             self.after(2001, self.update_idletasks)
-            self.after(2500, lambda: self.var_vencedor_registrado.set(f'Participante registrado com sucesso!'))
-            self.after(2501, self.update_idletasks)
-            self.after(6000, lambda: self.var_vencedor_registrado.set(' '))
-            self.after(6001, self.update_idletasks)
 
         def registra(cpf):
-            dados_vencedor = self.df_inscricoes.query(f'{CPF}=="{cpf}" and {DUPLICADA}==False')
-            if not dados_vencedor.shape[0]:
+            entry.delete(0, 'end')
+            if not self.tabelas.vencedor_exists(cpf):
                 return showerror('CPF inexistente',
                                  f'O CPF {cpf} não existe na lista de impressos. Verifique se foi digitado corretmente.')
-            self.df_vencedores = pd.concat([self.df_vencedores, dados_vencedor], ignore_index=True)
-            entry.delete(0, 'end')
+            self.tabelas.register_winner(cpf)
             Thread(target=pisca).start()
 
         entry = self.frame_children['entry_cpf_sorteado']
-        cpf_do_vencedor = parse(entry.get(), 'cpf', mask=True)
-        if CPF not in self.df_vencedores.columns or not any(self.df_vencedores[CPF] == cpf_do_vencedor):
-            registra(cpf_do_vencedor)
-        else:
-            r = askyesno('Vencedor já registrado', 'Este vencedor já foi registrado, deseja registrá-lo novamente?')
-            if r:
-                registra(cpf_do_vencedor)
-            else:
-                return
+        cpf_do_vencedor = vdb.CPF().mask(entry.get(), 'cpf', mask=True)
+        registra(cpf_do_vencedor)
 
     def salva_vencedores(self):
         caminho = self.var_caminho_inscritos.get()
-        relatorio = self.arquivos.salva_arquivo_filtrado(self.df_vencedores, caminho, 'vencedores')
+        relatorio = self.tabelas.salva_tabela('tb_vencedores', caminho)
 
-        showinfo('Vencedores da campanha', f'Foi gerado um relatório dos vencedores da campanha em: {relatorio}')
+        showinfo('Vencedores do sorteio', f'Foi gerado um relatório dos vencedores do sorteio em: {relatorio}')
+
+    def on_select(self, nome_impressora):
+        self.impressao.set_printer(nome_impressora)
+
+    @staticmethod
+    def img_lupa():
+        imagem = Image.open('icons/procurar_28x28.png')
+        return ctk.CTkImage(imagem)
 
     def iniciar_binds(self):
-        self.frame_children['entry_cpf_sorteado'].bind('<Return>', lambda e: self.registra_vencedor())
+        pass
+        # self.entry_cpf_sorteado.bind('<Return>', lambda e: self.registra_vencedor())
+        #
+        # self.impressora1.bind("<<ComboboxSelected>>", on_select)
+        #
+        # self.impressora2.bind("<<ComboboxSelected>>", on_select)
 
-    @property
-    def frame_children(self):
-        return self.children['frame'].children
-
-    @property
-    def impressora1(self):
-        return self.frame_children['impressora1'].get()
-
-    @property
-    def impressora2(self):
-        return self.frame_children['impressora2'].get()
+    def ajusta_caminho(self, caminho: str):
+        return caminho
 
 
 if __name__ == '__main__':
