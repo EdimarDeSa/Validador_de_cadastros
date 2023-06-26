@@ -158,9 +158,9 @@ class Main(Tk):
             self.df_inscricoes_validas = pd.DataFrame(columns=df.columns)
             self.registra_informacoes()
 
-        if arquivo == 'colaboradores':
-            self.df_colaboradores = df
-            self.var_caminho_colaboradores.set(caminho)
+    def abre_tb_colaboradores(self):
+        self.tabelas.inicia_tb_colaboradores()
+        self.var_caminho_colaboradores.set()
 
     def inicia_verificacao(self):
         Thread(target=self.inicia_impressao, daemon=True).start()
