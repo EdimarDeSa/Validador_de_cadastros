@@ -2,7 +2,7 @@ from win32print import ClosePrinter, EnumJobs, EnumPrinters, OpenPrinter
 from win32printing import Printer
 import pandas as pd
 
-from . import CPF, NOME
+from .constants import CPF, NOME
 
 
 class Impressora:
@@ -13,7 +13,7 @@ class Impressora:
         printer_list = list(self.__dict__.values())
         printer_list = printer_list[2:]
         return printer_list
-    
+
     def total_de_impressoras(self):
         return len(self.get_lista_de_impresoras_em_uso())
 
@@ -55,7 +55,6 @@ class Impressao(Impressora):
 
         for phandle in self.__phandle_list:
             jobs = EnumJobs(phandle, 0, -1)
-            print(jobs)
             jobs_list.extend(list(jobs))
 
         if not jobs_list:

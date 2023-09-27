@@ -1,1 +1,0 @@
-pyinstaller "Analisador_de_cadastros.spec" -y --distpath "./compilado/distribuicao" --workpath "./compilado/build" --clean

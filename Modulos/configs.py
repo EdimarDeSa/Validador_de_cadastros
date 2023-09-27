@@ -1,90 +1,71 @@
-from tkinter import Tk
-from customtkinter import CTkFont
+from json import load
+from pathlib import Path
+
+BASE = Path(__file__).resolve().parent.parent
+ARQUIVO_DE_CONFIGURACOES = BASE / 'configuracoes/configuracoes.json'
 
 
 class Configuracoes:
-    __cor_da_borda = 'green'
-    __cor_de_fundo = 'lightgreen'
-    __estilo_de_fonte = 'Roboto'
-    __tamanho_fonte_p = 10
-    __tamanho_fonte_m = 12
-    __tamanho_fonte_g = 15
-    __negrito = 'bold'
-    __cor_da_fonte = 'black'
+    def __init__(self):
+        self._tamanho_da_fonte = 0
+        self._estilo_da_fonte = 'Roboto'
+        self._negrito = 'bold'
+        self._themename = 'minty'
 
-    def __init__(self, root: Tk):
-        self.__root: Tk = root
-        self.largura_da_tela: int = 800
-        self.altura_da_tela: int = 380
-        self.posicao_y: int = self.__calcula_posicao_y()
-        self.posicao_x: int = self.__calcula_posicao_x()
+        self.abre_dados()
+
         self.root_parametros: dict = self.__root_parametros
-        self.frame_parametros: dict = self.__frame_parametros
+        self.label_titulos: dict = self.__label_titulos
         self.label_parametros: dict = self.__label_parametros
-        self.buttons_parametros: dict = self.__buttons_parametros
-        self.combobox_parametros: dict = self.__combobox_parametros
-        self.barra_de_progresso_parametros: dict = self.__progress_bar_parametros
+        self.label_caminho_parametros: dict = self.__label_caminho_parametros
         self.entry_parametros: dict = self.__entry_parametros
 
-    def __calcula_posicao_y(self) -> int:
-        altura_livre_do_monitor = self.__root.winfo_screenheight() - self.altura_da_tela
-        y_inicial = altura_livre_do_monitor // 10
-        return int(y_inicial)
+    def abre_dados(self):
+        with open(ARQUIVO_DE_CONFIGURACOES, 'r') as f:
+            loaded_configs: dict = load(f)
 
-    def __calcula_posicao_x(self) -> int:
-        largura_livre_do_monitor = self.__root.winfo_screenwidth() - self.largura_da_tela
-        x_inicial = largura_livre_do_monitor // 2
-        return int(x_inicial)
+        for key, value in loaded_configs.items():
+            setattr(self, f"_{key}", value)
+
+    @property
+    def _tamanho_da_fonte_m(self) -> int:
+        return int(self._tamanho_da_fonte * 1.2)
+
+    @property
+    def _tamanho_da_fonte_g(self) -> int:
+        return int(self._tamanho_da_fonte * 1.5)
 
     @property
     def __root_parametros(self) -> dict:
         parametros = {
-            # 'background': self.__cor_da_borda,
+            'themename': self._themename,
         }
         return parametros
 
     @property
-    def __frame_parametros(self) -> dict:
+    def __label_titulos(self) -> dict:
         parametros = {
-            # 'background': self.__cor_de_fundo,
+            'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte_g} bold',
         }
         return parametros
 
     @property
     def __label_parametros(self) -> dict:
         parametros = {
-            'font': CTkFont(family=self.__estilo_de_fonte, size=self.__tamanho_fonte_m, weight='bold'),
+            'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte} bold',
         }
         return parametros
 
     @property
-    def __combobox_parametros(self) -> dict:
+    def __label_caminho_parametros(self) -> dict:
         parametros = {
-            # 'foreground': self.__cor_da_fonte,
-            # 'background': self.__cor_de_fundo,
-        }
-        return parametros
-
-    @property
-    def __progress_bar_parametros(self) -> dict:
-        parametros = {
-            # 'orient': 'horizontal',
-            # 'mode': 'determinate',
-            # 'value': 0,
-        }
-        return parametros
-
-    @property
-    def __buttons_parametros(self) -> dict:
-        parametros = {
-            'font': CTkFont(self.__estilo_de_fonte, self.__tamanho_fonte_p),
+            'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte_m}',
         }
         return parametros
 
     @property
     def __entry_parametros(self) -> dict:
         parametros = {
-            'font': f'{self.__estilo_de_fonte} {self.__tamanho_fonte_p}',
-            # 'fg': self.__cor_da_fonte
+            'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte}',
         }
         return parametros

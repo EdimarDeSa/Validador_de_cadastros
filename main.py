@@ -1,37 +1,44 @@
-from turtle import title
-import ttkbootstrap as tkb
+import sys
 
+from ttkbootstrap import *
+from ttkbootstrap.constants import *
+
+from Modulos.constants import *
 from Modulos.imprimir import Impressao
 from Modulos.configs import Configuracoes
 from Modulos.models import Tabelas
 from Modulos.models.janelas import JanelaSorteios, JanelaImpressao
 
-class Main(tkb.Window):
+
+class Main(Window):
     def __init__(self):
-        tkb.Window.__init__(self, themename='minty')
         self.configuracoes = Configuracoes()
+        Window.__init__(self, **self.configuracoes.root_parametros)
         self.impressao = Impressao()
         self.tabelas = Tabelas()
 
-        self.iniciar_root()
+        self.configura_janela()
         self.inicia_widgets()
         self.redimenciona_tela()
 
         self.mainloop()
     
-    def iniciar_root(self):
+    def configura_janela(self):
         self.resizable(False, True)
-        self.title('Validador de inscrições')
+        self.title('Validador de cadastros')
+        self.protocol("WM_DELETE_WINDOW", self.close_evet)
 
     def inicia_widgets(self):
-        self.notebook = tkb.Notebook(self)
-        self.notebook.pack(fill="both", expand=True)
+        self.notebook = Notebook(self)
+        self.notebook.pack(fill=BOTH, expand=True)
 
-        # tab_registro_de_campanha = self.notebook.add('Registro de sorteios')
+        # tab_registro_de_campanha = Frame(self)
+        # self.notebook.add(tab_registro_de_campanha, text='Registro de sorteios')
         # JanelaSorteios(tab_registro_de_campanha, self.configuracoes, self.tabelas, self.impressao)
 
-        # tab_impressao = self.notebook.add('Validação e impressão')
-        # JanelaImpressao(tab_impressao, self.configuracoes, self.tabelas, self.impressao)
+        tab_impressao = Frame(self)
+        self.notebook.add(tab_impressao, text='Validação e impressão')
+        JanelaImpressao(tab_impressao, self.configuracoes, self.tabelas, self.impressao)
 
         # tab_registro_de_vencedor = self.notebook.add('Registro de vencedor')
         # self.aba_registro_de_vencedor = AbaRegistroDevencedor(tab_registro_de_vencedor, self.configuracoes, self.tabelas, self.impressao)
@@ -41,37 +48,32 @@ class Main(tkb.Window):
 
     def redimenciona_tela(self):
         dimensoes = {
-            'Registro de sorteios': {
-                'width': 1200,
-                'height': 500,
-                'pos_x': self.__calcula_posicao_x,
-                'pos_y': self.__calcula_posicao_y,
-            },
-            'Validação e impressão': {
-                'width': 800,
-                'height': 400,
-                'pos_x': self.__calcula_posicao_x,
-                'pos_y': self.__calcula_posicao_y,
-            }
+            'width': 1200,
+            'height': 500,
+            'pos_x': self.__calcula_posicao_x,
+            'pos_y': self.__calcula_posicao_y,
         }
 
         # tela_selecionada = self.notebook.:
-        dimensoes_tela = dimensoes['Registro de sorteios']
 
-        width, height = dimensoes_tela['width'], dimensoes_tela['height']
-        pos_x, pos_y = dimensoes_tela['pos_x'], dimensoes_tela['pos_y']
+        width, height = dimensoes['width'], dimensoes['height']
+        pos_x, pos_y = dimensoes['pos_x'](width), dimensoes['pos_y'](height)
 
         self.geometry(f"{width}x{height}+{pos_x}+{pos_y}")
 
-    def __calcula_posicao_y(self) -> int:
-        altura_livre_do_monitor = self.winfo_screenheight() - self.altura_da_tela
-        y_inicial = altura_livre_do_monitor // 10
-        return y_inicial
-
-    def __calcula_posicao_x(self) -> int:
-        largura_livre_do_monitor = self.winfo_screenwidth() - self.largura_da_tela
+    def __calcula_posicao_x(self, largura_da_janela) -> int:
+        largura_livre_do_monitor = self.winfo_screenwidth() - largura_da_janela
         x_inicial = largura_livre_do_monitor // 2
         return x_inicial
+
+    def __calcula_posicao_y(self, altura_da_janela) -> int:
+        altura_livre_do_monitor = self.winfo_screenheight() - altura_da_janela
+        y_inicial = altura_livre_do_monitor // 2
+        return y_inicial
+
+    @staticmethod
+    def close_evet():
+        sys.exit()
 
 
 if __name__ == '__main__':

@@ -1,21 +1,26 @@
-from os.path import dirname, join, exists
+from os.path import dirname, join
+from pathlib import Path
 from tkinter.filedialog import askopenfilename
 from tkinter.messagebox import showwarning
-import re
 
 import pandas as pd
 from pandas.errors import ParserError
 
-from Modulos import EXTENSOES, CPF, CODECS, SEPARADORES, EXTENSAO_DEFAULT
+from .constants import EXTENSOES, CPF, CODECS, SEPARADORES, EXTENSAO_DEFAULT
 
-DIRETORIO_BASE = f'../{dirname(__file__)}'
+DIRETORIO_BASE = Path(__file__).resolve().parent.parent
 
 
 class AbreArquivo:
-    def abre_documento(self, titulo='') -> str:
-        diretorio_documento = askopenfilename(defaultextension=EXTENSAO_DEFAULT, filetypes=EXTENSOES,
-                                              initialdir=DIRETORIO_BASE, title='Selecione o arquivo')
-        return diretorio_documento
+    @staticmethod
+    def abre_documento(titulo='') -> Path:
+        diretorio_documento = askopenfilename(
+            defaultextension=EXTENSAO_DEFAULT,
+            filetypes=EXTENSOES, 
+            initialdir=DIRETORIO_BASE,
+            title='Selecione o arquivo' if not titulo else titulo
+        )
+        return Path(diretorio_documento).resolve()
 
     @staticmethod
     def salva_arquivo_filtrado(arquivo: pd.DataFrame, caminho: str, tipo: str):
@@ -25,16 +30,16 @@ class AbreArquivo:
         return caminho_para_salvar
 
     @staticmethod
-    def abre_dataframe(diretorio_documento: str) -> pd.DataFrame:
+    def abre_dataframe(diretorio_documento: Path) -> pd.DataFrame:
         def try_open_csv(encoding, sep):
             try:
-                tipo_documento = re.findall(r'\.(\w+)', diretorio_documento)[0].lower()
+                tipo_documento = diretorio_documento.suffix
                 df = None
-                if tipo_documento == 'csv':
+                if tipo_documento == '.csv':
                     df = pd.read_csv(diretorio_documento, encoding=encoding, dtype='string', sep=sep)
-                if tipo_documento == 'xlsx':
+                if tipo_documento == '.xlsx':
                     df = pd.read_excel(diretorio_documento, dtype='string')
-                if tipo_documento == 'txt':
+                if tipo_documento == '.txt':
                     df = pd.read_table(diretorio_documento, encoding=encoding, dtype='string', sep=sep)
 
                 if CPF in df.columns:
