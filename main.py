@@ -1,30 +1,31 @@
 import sys
 
 from ttkbootstrap import *
-from ttkbootstrap.constants import *
 
 from Modulos.constants import *
+from Modulos.configuracoes import Configuracoes
 from Modulos.imprimir import Impressao
-from Modulos.configs import Configuracoes
 from Modulos.models import Tabelas
-from Modulos.models.janelas import JanelaSorteios, JanelaImpressao
+from Modulos.janelas.janelas import JanelaImpressao
+from Modulos.imagens import Imagens
 
 
 class Main(Window):
     def __init__(self):
         self.configuracoes = Configuracoes()
-        Window.__init__(self, **self.configuracoes.root_parametros)
+        Window.__init__(self, iconphoto='.\icons\icons8-lottery-50.png', **self.configuracoes.root_parametros)
         self.impressao = Impressao()
-        self.tabelas = Tabelas()
+        self.tabelas = Tabelas(self.impressao)
+        self._imagens = Imagens()
 
         self.configura_janela()
         self.inicia_widgets()
         self.redimenciona_tela()
 
         self.mainloop()
-    
+
     def configura_janela(self):
-        self.resizable(False, True)
+        self.resizable(False, False)
         self.title('Validador de cadastros')
         self.protocol("WM_DELETE_WINDOW", self.close_evet)
 
@@ -34,16 +35,16 @@ class Main(Window):
 
         # tab_registro_de_campanha = Frame(self)
         # self.notebook.add(tab_registro_de_campanha, text='Registro de sorteios')
-        # JanelaSorteios(tab_registro_de_campanha, self.configuracoes, self.tabelas, self.impressao)
+        # JanelaSorteios(tab_registro_de_campanha, self.configuracoes.py, self.tabelas, self.impressao)
 
         tab_impressao = Frame(self)
         self.notebook.add(tab_impressao, text='Validação e impressão')
         JanelaImpressao(tab_impressao, self.configuracoes, self.tabelas, self.impressao)
 
         # tab_registro_de_vencedor = self.notebook.add('Registro de vencedor')
-        # self.aba_registro_de_vencedor = AbaRegistroDevencedor(tab_registro_de_vencedor, self.configuracoes, self.tabelas, self.impressao)
+        # self.aba_registro_de_vencedor = AbaRegistroDevencedor(tab_registro_de_vencedor, self.configuracoes.py, self.tabelas, self.impressao)
 
-        # frame_graficos = Frame(master=self.notebook, **self.configuracoes.frame_parametros, name='frame_graficos')
+        # frame_graficos = Frame(master=self.notebook, **self.configuracoes.py.frame_parametros, name='frame_graficos')
         # self.notebook.add(frame_graficos, state='hidden', text='Graficos')
 
     def redimenciona_tela(self):

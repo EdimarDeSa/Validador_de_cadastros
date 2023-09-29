@@ -4,7 +4,7 @@ import validate_docbr as vdb
 import pandas as pd
 
 from ..arquivo import AbreArquivo
-from ..funcoes_main import limpeza_de_dados, capitaliza_nome
+from ..funcoes_sanitizacao import sanitiza_cpf, sanitiza_nome
 # from ..busca_cep import Cep
 from ..imprimir import Impressao
 from Modulos.constants import CPF, VALIDADE_CPF, NOME, DUPLICADA, COLABORADOR, COLUNAS_SERVICO_IMPRESSORAS
@@ -12,10 +12,10 @@ from Modulos.constants import CPF, VALIDADE_CPF, NOME, DUPLICADA, COLABORADOR, C
 
 class Tabelas:
 
-    def __init__(self) -> None:
-        self.arquivo = AbreArquivo()
-        self.impressao = Impressao()
-        self.docbr = vdb.CPF()
+    def __init__(self, impressao: Impressao) -> None:
+        self.__arquivo = AbreArquivo()
+        self.__impressao = impressao
+        self.__docbr = vdb.CPF()
 
         self.__caminho_tb_inscritos = None
         self.__tb_inscritos = None
@@ -59,12 +59,12 @@ class Tabelas:
         return log
 
     def inicia_tb_inscritos(self, data: str):
-        caminho = self.arquivo.abre_documento()
+        caminho = self.__arquivo.abre_documento()
 
         if not caminho:
             return
 
-        df_sujo = self.arquivo.abre_dataframe(caminho)
+        df_sujo = self.__arquivo.abre_dataframe(caminho)
         df_com_data = df_sujo.assign(**{
             'Dia_do_evento': lambda df=df_sujo: df['Data'].apply(lambda x: str(x).split()[0] == data),
         })
@@ -83,12 +83,12 @@ class Tabelas:
         return self.__caminho_tb_inscritos
 
     def inicia_tb_colaboradores(self):
-        caminho = self.arquivo.abre_documento()
+        caminho = self.__arquivo.abre_documento()
 
         if not caminho:
             return
 
-        df = self.arquivo.abre_dataframe(caminho)
+        df = self.__arquivo.abre_dataframe(caminho)
         self.__tb_colaboradores = df
         self.__caminho_tb_colaboradores = caminho
 
@@ -97,12 +97,12 @@ class Tabelas:
         return self.__caminho_tb_colaboradores
 
     def verifica_cadastros(self):
-        self.__tb_inscritos[CPF] = self.__tb_inscritos[CPF].apply(limpeza_de_dados)
+        self.__tb_inscritos[CPF] = self.__tb_inscritos[CPF].apply(sanitiza_cpf)
+        self.__tb_inscritos[NOME] = self.__tb_inscritos[NOME].apply(sanitiza_nome)
         self.__tb_inscritos = self.__tb_inscritos.assign(**{
-            NOME: lambda df: df[NOME].apply(capitaliza_nome),
             DUPLICADA: self.__tb_inscritos.duplicated(subset=CPF, keep='last'),
-            VALIDADE_CPF: lambda df: df.query(f'{DUPLICADA}==False')[CPF].apply(self.docbr.validate),
-            CPF: lambda df: df.query(f'{VALIDADE_CPF}==True')[CPF].apply(self.docbr.mask),
+            VALIDADE_CPF: lambda df: df.query(f'{DUPLICADA}==False')[CPF].apply(self.__docbr.validate),
+            CPF: lambda df: df.query(f'{VALIDADE_CPF}==True')[CPF].apply(self.__docbr.mask),
             COLABORADOR: lambda df: df[CPF].isin(self.__tb_colaboradores[CPF]),
         })
 
@@ -163,4 +163,4 @@ class Tabelas:
 
     def salva_tabela(self, nome_da_tabela: Literal['tb_vencedores', 'tb_inscricoes_validas'], caminho: str):
         tabela: pd.DataFrame = getattr(self, f'get_{nome_da_tabela}')
-        return self.arquivo.salva_arquivo_filtrado(tabela, caminho, nome_da_tabela)
+        return self.__arquivo.salva_arquivo_filtrado(tabela, caminho, nome_da_tabela)

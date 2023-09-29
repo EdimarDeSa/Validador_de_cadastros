@@ -2,25 +2,31 @@ from win32print import ClosePrinter, EnumJobs, EnumPrinters, OpenPrinter
 from win32printing import Printer
 import pandas as pd
 
-from .constants import CPF, NOME
+from Modulos.constants import CPF, NOME
 
 
 class Impressora:
-    def set_printer(self, printer_name: str) -> None:
-        self.__dict__[printer_name] = printer_name
+    def __init__(self):
+        self.__impressoras = {}
+
+    def set_printer(self, numero_impressora: str, printer_name: str):
+        if not printer_name:
+            if numero_impressora in self.__impressoras.keys():
+                self.__impressoras.pop(numero_impressora)
+            return
+        self.__impressoras.__setitem__(numero_impressora, printer_name)
 
     def get_lista_de_impresoras_em_uso(self) -> list[str]:
-        printer_list = list(self.__dict__.values())
-        printer_list = printer_list[2:]
-        return printer_list
+        return list(self.__impressoras.values())
 
+    @property
     def total_de_impressoras(self):
-        return len(self.get_lista_de_impresoras_em_uso())
+        return len(self.__impressoras)
 
 
 class Impressao(Impressora):
     def __init__(self):
-        super(Impressora, self).__init__()
+        super(Impressao, self).__init__()
         self.__index_atual = 0
         self.__phandle_list: list[OpenPrinter] = []
 
@@ -32,19 +38,39 @@ class Impressao(Impressora):
         return printer_list
 
     @staticmethod
-    def imprimir(cpf: str, nome: str, impressora: str):
+    def contagem_de_caracteres(nome: str):
+        linha1 = ''
+        linha2 = ''
+        total_de_caracteres_linha1 = 0
+        lista_nome: list = nome.split()
+
+        for parte in lista_nome:
+            total_de_caracteres_linha1 += (len(parte) + 1)
+            if total_de_caracteres_linha1 < 30:
+                linha1 = f'{linha1} {parte}'
+            else:
+                linha2 = f'{linha2} {parte}'
+
+        linha1 = linha1.lstrip(' ')
+        linha2 = linha2.lstrip(' ')
+        return linha1, linha2
+
+    def imprimir(self, cpf: str, nome: str, impressora: str):
         fonte_cpf = {
-            "height": 10,
-        }
-        fonte_nome = {
-            "height": 15,
+            "height": 6,
         }
 
+        fonte_nome = {
+            "height": 12,
+        }
+
+        linha1, linha2 = nome, ''
+
+        if len(nome) > 28: linha1, linha2 = self.contagem_de_caracteres(nome)
+
         with Printer(linegap=2, printer_name=impressora, doc_name=nome) as printer:
-            printer.text(f"CPF: {cpf}", font_config=fonte_cpf)
-            for _ in range(7):
-                printer.text('', font_config=fonte_cpf)
-            printer.text(f"Nome: {nome}", font_config=fonte_nome)
+            printer.text(f"CPF: {cpf}", align='right', font_config=fonte_cpf)
+            printer.text(f'''\n\n\n{linha1}\n{linha2}''', font_config=fonte_nome)
 
     def printers_job_checker(self) -> list[dict]:
         jobs_list = list()
@@ -71,7 +97,7 @@ class Impressao(Impressora):
     def verifica_vez_da_impressora(self) -> str:
         printer_list: list = self.get_lista_de_impresoras_em_uso()
         printer = printer_list[self.__index_atual]
-        self.__index_atual = (self.__index_atual + 1) % self.total_de_impressoras()
+        self.__index_atual = (self.__index_atual + 1) % self.total_de_impressoras
         if printer:
             return printer
 
@@ -83,3 +109,4 @@ class Impressao(Impressora):
 
     def enviar_tabela_para_impressora(self, tabela: pd.DataFrame):
         tabela.apply(self.__imprime_inscrito, axis=1)
+
