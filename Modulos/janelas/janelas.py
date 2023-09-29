@@ -1,21 +1,19 @@
+import tkinter
 from pathlib import Path
 from threading import Thread
-import tkinter
 from tkinter.messagebox import showinfo
 
 from ttkbootstrap import *
-from ttkbootstrap.tableview import Tableview
-from ttkbootstrap.tooltip import ToolTip
 from ttkbootstrap.scrolled import ScrolledFrame
 from ttkbootstrap.style import Bootstyle
+from ttkbootstrap.tableview import Tableview
+from ttkbootstrap.tooltip import ToolTip
 
-from Modulos.log_panel import LogPanel
 from Modulos.configuracoes import Configuracoes
-from Modulos.imprimir import Impressao
-from Modulos.models.produto import Produto
-from Modulos.models.sorteio import Sorteio
-from Modulos.constants import *
 from Modulos.imagens import Imagens
+from Modulos.imprimir import Impressao
+from Modulos.log_panel import LogPanel
+from Modulos.models.produto import Produto
 
 
 class CollapsingFrame(ScrolledFrame):
@@ -28,7 +26,7 @@ class CollapsingFrame(ScrolledFrame):
 
         # widget images
         self.images = Imagens()
-        
+
     def add(self, child, title="", bootstyle=PRIMARY, **kwargs):
         """Add a child to the collapsible frame
 
@@ -54,23 +52,16 @@ class CollapsingFrame(ScrolledFrame):
         frm.grid(row=self.cumulative_rows, column=0, sticky=EW)
 
         # header title
-        header = Label(
-            master=frm,
-            text=title,
-            bootstyle=(style_color, INVERSE)
-        )
+        header = Label(master=frm, text=title, bootstyle=(style_color, INVERSE))
         if kwargs.get('textvariable'):
             header.configure(textvariable=kwargs.get('textvariable'))
         header.pack(side=LEFT, fill=BOTH, padx=10)
 
         # header toggle button
-        def _func(c=child): return self._toggle_open_close(c)
-        btn = ttk.Button(
-            master=frm,
-            image=self.images.img_seta_para_cima,
-            bootstyle=style_color,
-            command=_func
-        )
+        def _func(c=child):
+            return self._toggle_open_close(c)
+
+        btn = ttk.Button(master=frm, image=self.images.img_seta_para_cima, bootstyle=style_color, command=_func)
         btn.pack(side=RIGHT)
 
         # assign toggle button to child so that it can be toggled
@@ -124,96 +115,40 @@ class JanelaSorteios(JanelaPadrao):
         self.lista_de_sorteios.place(relx=0.005, rely=0.51, relheight=0.49, relwidth=0.99)
         self.inicia_frame_registro_sorteio(self.lista_de_sorteios)
 
-        # self.atualiza_sorteio_atual()
-        # self.sorteio_atual: Sorteio = Sorteio(self.var_sorteio_atual.get())
+        # self.atualiza_sorteio_atual()  # self.sorteio_atual: Sorteio = Sorteio(self.var_sorteio_atual.get())
 
     def inicia_frame_registro_sorteio(self, master):
         self.lista_de_sorteios.add(Frame(self.lista_de_sorteios), 'Sorteio 1')
 
     def inicia_frame_produtos(self, master: Frame):
-        colunas = [
-            dict(text="Código", width=80, stretch=False),
-            dict(text="Nome", width=400, stretch=False),
-            dict(text="Qtd", width=50, stretch=False),
-            dict(text="CC", width=80, stretch=False),
+        colunas = [dict(text="Código", width=80, stretch=False), dict(text="Nome", width=400, stretch=False),
+            dict(text="Qtd", width=50, stretch=False), dict(text="CC", width=80, stretch=False),
             dict(text="Fechamento CC", width=120, stretch=False),
-            dict(text="Responsável CC", width=250, stretch=False),
-        ]
+            dict(text="Responsável CC", width=250, stretch=False), ]
 
-        data = [
-            [
-                "00000000000",
-                "Produto 1",
-                "1",
-                "12345",
-                "12/01/24",
-                "Marta Rosa Nunes",
-            ],
-            (
-                "00000000000",
-                "Produto 2",
-                "1",
-                "12345",
-                "12/01/24",
-                "Marta Rosa Nunes",
-            ),
-            (
-                "00000000000",
-                "Produto 3",
-                "1",
-                "12345",
-                "12/01/24",
-                "Marta Rosa Nunes",
-            ),
-            (
-                "00000000000",
-                "Produto 4",
-                "1",
-                "12345",
-                "12/01/24",
-                "Marta Rosa Nunes",
-            ),
-            (
-                "00000000000",
-                "Produto 5",
-                "1",
-                "12345",
-                "12/01/24",
-                "Marta Rosa Nunes",
-            ),
-            (
-                "00000000000",
-                "Produto 6",
-                "1",
-                "12345",
-                "12/01/24",
-                "Marta Rosa Nunes",
-            ),
-        ]
-        self.tabela_de_produtos = Tableview(
-            master, coldata=colunas, rowdata=data, stripecolor=('#78c2ad', None), delimiter=";"
-        )
+        data = [["00000000000", "Produto 1", "1", "12345", "12/01/24", "Marta Rosa Nunes", ],
+            ("00000000000", "Produto 2", "1", "12345", "12/01/24", "Marta Rosa Nunes",),
+            ("00000000000", "Produto 3", "1", "12345", "12/01/24", "Marta Rosa Nunes",),
+            ("00000000000", "Produto 4", "1", "12345", "12/01/24", "Marta Rosa Nunes",),
+            ("00000000000", "Produto 5", "1", "12345", "12/01/24", "Marta Rosa Nunes",),
+            ("00000000000", "Produto 6", "1", "12345", "12/01/24", "Marta Rosa Nunes",), ]
+        self.tabela_de_produtos = Tableview(master, coldata=colunas, rowdata=data, stripecolor=('#78c2ad', None),
+            delimiter=";")
 
         self.tabela_de_produtos.place(relx=0, rely=0, relwidth=0.79, relheight=1)
 
-        Button(
-            master, text="Adicionar produto", command=self.formulario_de_criacao_de_produto,
-        ).place(relx=0.8, rely=0.3, relwidth=0.19)
+        Button(master, text="Adicionar produto", command=self.formulario_de_criacao_de_produto).place(relx=0.8,
+                                                                                                        rely=0.3,
+                                                                                                        relwidth=0.19)
 
-        Button(
-            master, text="Remover produto", command=self.remove_produto
-        ).place(relx=0.8, rely=0.6, relwidth=0.19)
+        Button(master, text="Remover produto", command=self.remove_produto).place(relx=0.8, rely=0.6, relwidth=0.19)
 
     def formulario_de_criacao_de_produto(self):
         if self.var_formulario_de_produto_aberto:
             return
 
         self.var_formulario_de_produto_aberto = True
-        self.top = Toplevel(
-            title="Cadastro de produto",
-            size=(800, 260),
-            resizable=(False, False),
-        )
+        self.top = Toplevel(title="Cadastro de produto", size=(800, 260), resizable=(False, False))
 
         reg_verifica_digito_numerico = self.top.register(self.verifica_digito_numerico)
 
@@ -223,44 +158,32 @@ class JanelaSorteios(JanelaPadrao):
 
         # ------- PRIMEIRA LINHA ------- #
 
-        Label(self.top, text="Código", **self.configuracoes.label_parametros).place(
-            x=10, y=10
-        )
-        self.codigo = Entry(
-            self.top, validatecommand=(reg_verifica_digito_numerico, '%P'), validate='key',
-            **self.configuracoes.entry_parametros
-        )
+        Label(self.top, text="Código", **self.configuracoes.label_parametros).place(x=10, y=10)
+        self.codigo = Entry(self.top, validatecommand=(reg_verifica_digito_numerico, '%P'), validate='key',
+            **self.configuracoes.entry_parametros)
         self.codigo.place(x=10, y=40, width=200)
         ToolTip(self.codigo, text='Para procurar o produto aperte o "ENTER"')
 
-        Label(self.top, text="Produto", **self.configuracoes.label_parametros).place(
-            x=220, y=10
-        )
+        Label(self.top, text="Produto", **self.configuracoes.label_parametros).place(x=220, y=10)
         self.nome_do_produto = Entry(self.top, **self.configuracoes.entry_parametros)
         self.nome_do_produto.place(x=220, y=40, width=410)
 
         Label(self.top, text="Quantidade", **self.configuracoes.label_parametros).place(x=640, y=10)
-        self.quantidade = Entry(
-            self.top, validatecommand=(reg_verifica_digito_numerico, '%P'), validate='key',
-            **self.configuracoes.entry_parametros
-        )
+        self.quantidade = Entry(self.top, validatecommand=(reg_verifica_digito_numerico, '%P'), validate='key',
+            **self.configuracoes.entry_parametros)
         self.quantidade.place(x=640, y=40, width=150)
         self.quantidade.insert(0, '1')
 
         # ------- SEGUNDA LINHA ------- #
 
         Label(self.top, text="Centro de Custos", **self.configuracoes.label_parametros).place(x=10, y=110)
-        self.centro_de_custos = Entry(
-            self.top, validatecommand=(reg_verifica_digito_numerico, '%P'), validate='key',
-            **self.configuracoes.entry_parametros
-        )
+        self.centro_de_custos = Entry(self.top, validatecommand=(reg_verifica_digito_numerico, '%P'), validate='key',
+            **self.configuracoes.entry_parametros)
         self.centro_de_custos.place(x=10, y=140, width=200)
         self.centro_de_custos.insert(0, "23504")
 
         Label(self.top, text="Data de fechamento CC", **self.configuracoes.label_parametros).place(x=220, y=110)
-        self.data_de_fechamento_cc = DateEntry(
-            self.top
-        )
+        self.data_de_fechamento_cc = DateEntry(self.top)
         self.data_de_fechamento_cc.place(x=220, y=140)
 
         Label(self.top, text="Responsável pelo CC", **self.configuracoes.label_parametros).place(x=430, y=110)
@@ -270,13 +193,9 @@ class JanelaSorteios(JanelaPadrao):
 
         # ------- TERCEIRA LINHA ------- #
 
-        Button(self.top, text="Adicionar", command=self.salva_produto).place(
-            x=170, y=210, width=160
-        )
+        Button(self.top, text="Adicionar", command=self.salva_produto).place(x=170, y=210, width=160)
 
-        Button(self.top, text="Limpar", command=self.limpa_formulario_de_produto).place(
-            x=500, y=210, width=160
-        )
+        Button(self.top, text="Limpar", command=self.limpa_formulario_de_produto).place(x=500, y=210, width=160)
 
     def limpa_formulario_de_produto(self):
         self.codigo.delete(0, END)
@@ -285,7 +204,7 @@ class JanelaSorteios(JanelaPadrao):
         self.centro_de_custos.delete(0, END)
         self.data_de_fechamento_cc.entry.delete(0, END)
         self.responsavel_pelo_cc.delete(0, END)
-    
+
     def fechar_formulario_de_produto(self):
         self.var_formulario_de_produto_aberto = False
         self.top.destroy()
@@ -328,48 +247,28 @@ class JanelaSorteios(JanelaPadrao):
             return
 
         self.tabela_de_produtos.insert_row(
-            values=[
-                codigo,
-                nome_do_produto,
-                quantidade,
-                cc,
-                data_fechamento_cc,
-                responsavel_cc,
-            ]
-        )
-        
+            values=[codigo, nome_do_produto, quantidade, cc, data_fechamento_cc, responsavel_cc, ])
+
         self.fechar_formulario_de_produto()
         self.tabela_de_produtos.load_table_data()
 
     def remove_produto(self):
         iids = self.tabela_de_produtos.view.selection()
         self.tabela_de_produtos.delete_rows(iids=iids)
-    
+
     def salva_premio(self):
         codigo = self.codigo.get()
         nome = self.nome.get()
         quantidade = self.quantidade.get() if self.quantidade.get() else "1"
         cc = self.cc.get() if self.cc.get() else "23504"
-        data_fechamento_cc = (
-            self.data_fechamento_cc.get()
-            if self.data_fechamento_cc.get()
-            else "Não fecha"
-        )
-        responsavel_cc = (
-            self.responsavel_cc.get()
-            if self.responsavel_cc.get()
-            else "Marta Rosa Nunes"
-        )
+        data_fechamento_cc = (self.data_fechamento_cc.get() if self.data_fechamento_cc.get() else "Não fecha")
+        responsavel_cc = (self.responsavel_cc.get() if self.responsavel_cc.get() else "Marta Rosa Nunes")
 
         if not codigo or not nome:
-            return showinfo(
-                "Informação necessária",
-                "É necessário que todas as informações do produto sejam preenchidas",
-            )
+            return showinfo("Informação necessária",
+                "É necessário que todas as informações do produto sejam preenchidas")
 
-        produto = Produto(
-            codigo, nome, quantidade, cc, data_fechamento_cc, responsavel_cc
-        )
+        produto = Produto(codigo, nome, quantidade, cc, data_fechamento_cc, responsavel_cc)
         self.sorteio_atual.registra_premio(produto)
 
         self.frame_produtos.add_linha(nome, produto)
@@ -385,13 +284,7 @@ class JanelaSorteios(JanelaPadrao):
 
     def verifica_digito(self, event):
         codigo = self.codigo.get()
-        if not str(event.char).isnumeric() and event.char not in (
-            "",
-            "\t",
-            "\r",
-            "\n",
-            "\x08",
-        ):
+        if not str(event.char).isnumeric() and event.char not in ("", "\t", "\r", "\n", "\x08",):
             self.codigo.after(10, lambda: self.codigo.delete(len(codigo) - 1))
 
         if len(codigo) > 8:
@@ -450,7 +343,7 @@ class JanelaImpressao(JanelaPadrao):
         frame_impressao.columnconfigure(1, minsize=250)
         frame_impressao.columnconfigure(2, minsize=250)
         frame_impressao.columnconfigure(3, minsize=50)
-        
+
         self.inicia_form_impressao_linha1(frame_impressao, self.linha_1)
         self.inicia_form_impressao_linha2(frame_impressao, self.linha_2)
         self.inicia_form_impressao_linha3(frame_impressao, self.linha_3)
@@ -462,68 +355,44 @@ class JanelaImpressao(JanelaPadrao):
         self.inicia_widget_impressora(master, 0.01, linha, 1)
         self.inicia_widget_impressora(master, 0.31, linha, 2)
 
-        Label(
-            master, text='Data do evento:', **self.configuracoes.label_parametros,
-        ).place(relx=0.61, rely=linha)
+        Label(master, text='Data do evento:', **self.configuracoes.label_parametros).place(relx=0.61, rely=linha)
 
         self.data = DateEntry(master)
         self.data.place(relx=0.73, rely=linha - 0.01)
 
     def inicia_form_impressao_linha2(self, master: Frame, linha):
-        Label(
-            master,
-            textvariable=self.var_total_de_cadastros,
-            **self.configuracoes.label_parametros,
-        ).place(relx=0.01, rely=linha)
+        Label(master, textvariable=self.var_total_de_cadastros, **self.configuracoes.label_parametros).place(
+            relx=0.01, rely=linha)
 
-        Label(
-            master,
-            textvariable=self.var_inscricoes_validas,
-            **self.configuracoes.label_parametros,
-        ).place(relx=0.51, rely=linha)
+        Label(master, textvariable=self.var_inscricoes_validas, **self.configuracoes.label_parametros).place(
+            relx=0.51, rely=linha)
 
     def inicia_form_impressao_linha3(self, master: Frame, linha):
-        Label(
-            master,
-            textvariable=self.var_cadastros_repetidos,
-            **self.configuracoes.label_parametros,
-        ).place(relx=0.01, rely=linha)
+        Label(master, textvariable=self.var_cadastros_repetidos, **self.configuracoes.label_parametros).place(
+            relx=0.01, rely=linha)
 
-        Label(
-            master,
-            textvariable=self.var_cpfs_invalidos,
-            **self.configuracoes.label_parametros,
-        ).place(relx=0.34, rely=linha)
+        Label(master, textvariable=self.var_cpfs_invalidos, **self.configuracoes.label_parametros).place(relx=0.34,
+                                                                                                           rely=linha)
 
-        Label(
-            master,
-            textvariable=self.var_colaboradores_cadastrados,
-            **self.configuracoes.label_parametros,
-        ).place(relx=0.67, rely=linha)
+        Label(master, textvariable=self.var_colaboradores_cadastrados, **self.configuracoes.label_parametros).place(
+            relx=0.67, rely=linha)
 
     def inicia_form_impressao_linha4(self, master: Frame, linha):
         self.inicia_widget_localizazao_de_arquivo(master, self.var_caminho_inscritos, linha, self.abre_tb_inscritos)
-        
+
     def inicia_form_impressao_linha5(self, master: Frame, linha):
-        self.inicia_widget_localizazao_de_arquivo(master, self.var_caminho_colaboradores, linha, self.abre_tb_colaboradores)
+        self.inicia_widget_localizazao_de_arquivo(master, self.var_caminho_colaboradores, linha,
+                                                  self.abre_tb_colaboradores)
 
     def inicia_form_impressao_linha6(self, master: Frame):
-        self.bt_inicia_verificacao = Button(
-            master,
-            command=self.escreve_resultado_de_verificacao,
-            text="Verifica cadastros",
-        )
+        self.bt_inicia_verificacao = Button(master, command=self.escreve_resultado_de_verificacao,
+            text="Verifica cadastros")
 
-        self.bt_inicia_impressao = Button(
-            master,
-            command=self.inicia_thread_impressao,
-            text="Iniciar impressão",
-        )
+        self.bt_inicia_impressao = Button(master, command=self.inicia_thread_impressao, text="Iniciar impressão")
 
     def inicia_widget_impressora(self, master: Frame, coluna: float, linha: float, numero: int):
-        Label(
-            master, text=f'Impressora {numero}:', **self.configuracoes.label_parametros,
-        ).place(relx=coluna, rely=linha)
+        Label(master, text=f'Impressora {numero}:', **self.configuracoes.label_parametros).place(relx=coluna,
+                                                                                                   rely=linha)
 
         nome_widget = f'impressora{numero}'
         impressora = Combobox(master, name=nome_widget, values=self.impressao.listar_impressoras())
@@ -534,9 +403,8 @@ class JanelaImpressao(JanelaPadrao):
     def inicia_widget_localizazao_de_arquivo(self, master: Frame, var, linha, comando):
         Label(master, textvariable=var, **self.configuracoes.label_caminho_parametros).place(relx=0.01, rely=linha)
 
-        Button(
-            master, image=self.imagens.img_lupa, command=comando, text='Procurar', style=OUTLINE
-        ).place(relx=0.86, rely=linha)
+        Button(master, image=self.imagens.img_lupa, command=comando, text='Procurar', style=OUTLINE).place(relx=0.86,
+                                                                                                           rely=linha)
 
     def ao_selecionra_impressora(self, event: tkinter.Event):
         widget: Combobox = event.widget
@@ -547,25 +415,16 @@ class JanelaImpressao(JanelaPadrao):
     def escreve_resultado_de_verificacao(self):
         self.tabelas.verifica_cadastros()
 
-        self.var_cadastros_repetidos.set(
-            f"Cadastros repetidos: {self.tabelas.get_total_cadastros_repetidos}"
-        )
+        self.var_cadastros_repetidos.set(f"Cadastros repetidos: {self.tabelas.get_total_cadastros_repetidos}")
 
-        self.var_cpfs_invalidos.set(
-            f"CPFs inválidos: {self.tabelas.get_total_cpfs_invalidos}"
-        )
+        self.var_cpfs_invalidos.set(f"CPFs inválidos: {self.tabelas.get_total_cpfs_invalidos}")
 
         self.var_colaboradores_cadastrados.set(
-            f"Colaboradores cadasrtados: {self.tabelas.get_total_colaboradores_cadastrados}"
-        )
+            f"Colaboradores cadasrtados: {self.tabelas.get_total_colaboradores_cadastrados}")
 
-        self.var_inscricoes_validas.set(
-            f"Participantes válidos: {self.tabelas.get_total_inscricoes_validas}"
-        )
+        self.var_inscricoes_validas.set(f"Participantes válidos: {self.tabelas.get_total_inscricoes_validas}")
 
-        self.master.after(
-            500, lambda: self.bt_inicia_impressao.place(relx=0.26, rely=self.linha_6)
-        )
+        self.master.after(500, lambda: self.bt_inicia_impressao.place(relx=0.26, rely=self.linha_6))
 
     def abre_tb_inscritos(self):
         self.tabelas.inicia_tb_inscritos(data=self.data.entry.get())
@@ -575,9 +434,7 @@ class JanelaImpressao(JanelaPadrao):
             return
 
         self.var_caminho_inscritos.set(self.ajusta_caminho(caminho))
-        self.var_total_de_cadastros.set(
-            f"Total de cadastros: {self.tabelas.get_total_inscritos}"
-        )
+        self.var_total_de_cadastros.set(f"Total de cadastros: {self.tabelas.get_total_inscritos}")
 
         self.bt_inicia_impressao.place_forget()
         self.bt_inicia_verificacao.place(relx=0.01, rely=self.linha_6)
@@ -602,11 +459,9 @@ class JanelaImpressao(JanelaPadrao):
     def inicia_impressao(self):
         if not self.impressao.get_lista_de_impresoras_em_uso():
             showinfo('Falha de impressora', 'Selecione ao menos uma impressora!')
-            return 
+            return
 
-        self.log_panel = LogPanel(
-            self.impressao, self.tabelas, self.configuracoes.label_parametros
-        )
+        self.log_panel = LogPanel(self.impressao, self.tabelas, self.configuracoes.label_parametros)
         self.log_panel.start_monitoramento()
 
         self.impressao.enviar_tabela_para_impressora(self.tabelas.get_tb_inscricoes_validas)

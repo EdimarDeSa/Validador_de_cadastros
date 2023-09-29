@@ -39,35 +39,25 @@ class Configuracoes:
 
     @property
     def __parametros_root(self) -> dict:
-        parametros = {
-            'themename': self._themename,
-        }
+        parametros = {'themename': self._themename, }
         return parametros
 
     @property
     def __label_titulos(self) -> dict:
-        parametros = {
-            'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte_g} bold',
-        }
+        parametros = {'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte_g} bold', }
         return parametros
 
     @property
     def __label_parametros(self) -> dict:
-        parametros = {
-            'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte} bold',
-        }
+        parametros = {'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte} bold', }
         return parametros
 
     @property
     def __label_caminho_parametros(self) -> dict:
-        parametros = {
-            'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte_m}',
-        }
+        parametros = {'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte_m}', }
         return parametros
 
     @property
     def __entry_parametros(self) -> dict:
-        parametros = {
-            'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte}',
-        }
+        parametros = {'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte}', }
         return parametros

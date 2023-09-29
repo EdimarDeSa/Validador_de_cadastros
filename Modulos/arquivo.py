@@ -14,12 +14,9 @@ DIRETORIO_BASE = Path(__file__).resolve().parent.parent
 class AbreArquivo:
     @staticmethod
     def abre_documento(titulo='') -> Path:
-        diretorio_documento = askopenfilename(
-            defaultextension=EXTENSAO_DEFAULT,
-            filetypes=EXTENSOES, 
-            initialdir=DIRETORIO_BASE,
-            title='Selecione o arquivo' if not titulo else titulo
-        )
+        diretorio_documento = askopenfilename(defaultextension=EXTENSAO_DEFAULT, filetypes=EXTENSOES,
+                                              initialdir=DIRETORIO_BASE,
+                                              title='Selecione o arquivo' if not titulo else titulo)
         return Path(diretorio_documento).resolve()
 
     @staticmethod

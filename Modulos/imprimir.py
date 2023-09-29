@@ -1,6 +1,6 @@
+import pandas as pd
 from win32print import ClosePrinter, EnumJobs, EnumPrinters, OpenPrinter
 from win32printing import Printer
-import pandas as pd
 
 from Modulos.constants import CPF, NOME
 
@@ -88,7 +88,7 @@ class Impressao(Impressora):
                 ClosePrinter(phandle)
 
         return jobs_list
-    
+
     def __inicia_phandle_list(self) -> None:
         for printer_name in self.get_lista_de_impresoras_em_uso():
             phandle = OpenPrinter(printer_name)
@@ -109,4 +109,3 @@ class Impressao(Impressora):
 
     def enviar_tabela_para_impressora(self, tabela: pd.DataFrame):
         tabela.apply(self.__imprime_inscrito, axis=1)
-
