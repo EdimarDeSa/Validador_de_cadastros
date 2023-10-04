@@ -6,7 +6,7 @@ from Modulos.constants import *
 from Modulos.configuracoes import Configuracoes
 from Modulos.imprimir import Impressao
 from Modulos.models import Tabelas
-from Modulos.janelas.janelas import JanelaImpressao, JanelaSorteios
+from Modulos.janelas.janelas import JanelaImpressao, JanelaSorteios, JanelaRegistroDevencedor
 from Modulos.imagens import Imagens
 
 
@@ -41,8 +41,9 @@ class Main(Window):
         self.notebook.add(tab_impressao, text='Validação e impressão')
         JanelaImpressao(tab_impressao, self.configuracoes, self.tabelas, self.impressao)
 
-        # tab_registro_de_vencedor = self.notebook.add('Registro de vencedor')
-        # self.aba_registro_de_vencedor = AbaRegistroDevencedor(tab_registro_de_vencedor, self.configuracoes.py, self.tabelas, self.impressao)
+        tab_registro_de_vencedor = Frame(self)
+        self.notebook.add(tab_registro_de_vencedor, text='Registro de vencedor')
+        JanelaRegistroDevencedor(tab_registro_de_vencedor, self.configuracoes, self.tabelas, self.impressao)
 
         # frame_graficos = Frame(master=self.notebook, **self.configuracoes.py.frame_parametros, name='frame_graficos')
         # self.notebook.add(frame_graficos, state='hidden', text='Graficos')

@@ -66,11 +66,13 @@ class CollapsingFrame(ScrolledFrame):
         btn = Button(master=frm, image=self.images.img_seta_para_cima, bootstyle=style_color, command=_func)
         btn.pack(padx=(0, 10), side=RIGHT)
 
-        edit = Button(
-            master=frm, image=self.images.img_editar, bootstyle=style_color,
-            command=lambda c=child: kwargs['edita_sorteio'](c)
-        )
-        edit.pack(padx=(0, 10), side=RIGHT)
+        if kwargs.get('edita_sorteio'):
+            edita_sorteio = kwargs.get('edita_sorteio')
+            edit = Button(
+                master=frm, image=self.images.img_editar, bootstyle=style_color,
+                command=lambda c=child: edita_sorteio(c)
+            )
+            edit.pack(padx=(0, 10), side=RIGHT)
 
         # assign toggle button to child so that it can be toggled
         child.btn = btn
@@ -110,9 +112,9 @@ class JanelaSorteios(JanelaPadrao):
     def __init__(self, master: Frame, configuracoes, tabelas, impressao):
         super().__init__(master, configuracoes, tabelas, impressao)
 
-        self.var_sorteio_atual: [Sorteio, None] = None
-        self.tabela_de_produtos: [Tableview, None] = None
-        self.lista_de_sorteios: [CollapsingFrame, None] = None
+        self.var_sorteio_atual: Sorteio = None
+        self.tabela_de_produtos: Tableview = None
+        self.lista_de_sorteios: CollapsingFrame = None
         self.var_caminho_sorteio = StringVar(value="Clique para procurar")
         self.var_caminho_tabela_de_precos = StringVar(value="Clique para procurar")
         self.var_formulario_de_produto_aberto = False
@@ -153,13 +155,13 @@ class JanelaSorteios(JanelaPadrao):
 
         self.var_sorteio_atual = Sorteio(self.lista_de_sorteios, self.checa_nome_do_sorteio)
 
-        Button(
-            master, text="Importar sorteios", command='', style=PRIMARY
-        ).place(relx=0.8, rely=0.3, relwidth=0.19)
-
-        Button(
-            master, text="Exportar sorteios", command='', style=INFO
-        ).place(relx=0.8, rely=0.5, relwidth=0.19)
+        # Button(
+        #     master, text="Importar sorteios", command='', style=PRIMARY
+        # ).place(relx=0.8, rely=0.3, relwidth=0.19)
+        #
+        # Button(
+        #     master, text="Exportar sorteios", command='', style=INFO
+        # ).place(relx=0.8, rely=0.5, relwidth=0.19)
 
     def abre_formulario_de_produto(
             self, codigo='', nome_do_produto='', quantidade='1', centro_de_custos='23504',
@@ -265,50 +267,48 @@ class JanelaSorteios(JanelaPadrao):
 
     def salva_produto(self, iid=None):
         codigo = self.campo_codigo.get()
-        nome_do_produto = self.campo_nome_do_produto.get()
-        quantidade = self.campo_quantidade.get()
-        cc = self.campo_centro_de_custos.get()
-        data_fechamento_cc = self.campo_data_de_fechamento_cc.entry.get()
-        responsavel_cc = self.campo_responsavel_pelo_cc.get()
-
         if not codigo:
             self.informa_falta_de_dado('Código')
             self.campo_codigo.focus_set()
             return
 
+        nome_do_produto = self.campo_nome_do_produto.get()
         if not nome_do_produto:
             self.informa_falta_de_dado('Nome do produto')
             self.campo_nome_do_produto.focus_set()
             return
 
+        quantidade = self.campo_quantidade.get()
         if not quantidade:
             self.informa_falta_de_dado('Quantidade')
             self.campo_quantidade.focus_set()
             return
 
+        cc = self.campo_centro_de_custos.get()
         if not cc:
             self.informa_falta_de_dado('Centro de Custo')
             self.campo_centro_de_custos.focus_set()
             return
 
+        data_fechamento_cc = self.campo_data_de_fechamento_cc.entry.get()
+        responsavel_cc = self.campo_responsavel_pelo_cc.get()
         if not responsavel_cc:
             self.informa_falta_de_dado('Responsável pelo cc')
             self.campo_responsavel_pelo_cc.focus_set()
             return
 
+        valores = [codigo, nome_do_produto, quantidade, cc, data_fechamento_cc, responsavel_cc]
         if not iid:
-            self.tabela_de_produtos.insert_row(
-                values=[codigo, nome_do_produto, quantidade, cc, data_fechamento_cc, responsavel_cc]
-            )
+            self.tabela_de_produtos.insert_row(values=valores)
         else:
-            linha = self.tabela_de_produtos.get_row(iid=iid)
-            linha.values = [codigo, nome_do_produto, quantidade, cc, data_fechamento_cc, responsavel_cc]
+            self.tabela_de_produtos.get_row(iid=iid).values = valores
 
         self.fechar_formulario_de_produto()
         self.tabela_de_produtos.load_table_data()
 
     def editar_produto(self):
-        self.abre_formulario_de_produto(*self.tabela_de_produtos.get_row(iid=self.get_iids_selecionados[0]).values)
+        kw = dict(iid=self.get_iids_selecionados[0])
+        self.abre_formulario_de_produto(*self.tabela_de_produtos.get_row(**kw).values, **kw)
 
     def remove_produto(self):
         self.tabela_de_produtos.delete_rows(iids=self.get_iids_selecionados)
@@ -322,12 +322,20 @@ class JanelaSorteios(JanelaPadrao):
 
         self.var_sorteio_atual.atualiza_premios(premios)
 
+        # Cria novo sorteio se não estiver em edição
         if not self.var_sorteio_em_edicao:
-            self.lista_de_sorteios.add(self.var_sorteio_atual, self.checa_nome_do_sorteio, edita_sorteio=self.edita_sorteio)
+            self.lista_de_sorteios.add(
+                self.var_sorteio_atual, self.checa_nome_do_sorteio, edita_sorteio=self.edita_sorteio
+            )
             self.var_lista_de_sorteios.append(self.var_sorteio_atual)
 
-        self.var_sorteio_atual = Sorteio(self.lista_de_sorteios)
+        self.tabelas.add_sorteio(self.var_lista_de_sorteios)
+
+        # Cria novo objeto de sorteio com nome sequencial à quantidade de sorteios
+        self.var_sorteio_atual = Sorteio(self.lista_de_sorteios, self.checa_nome_do_sorteio)
+
         self.limpa_tabela_de_produtos()
+        self.var_sorteio_em_edicao = False
 
     def limpa_tabela_de_produtos(self):
         iids = [iid.iid for iid in self.tabela_de_produtos.get_rows()]
@@ -530,3 +538,15 @@ class JanelaImpressao(JanelaPadrao):
         #     caminho_ajustado = "..." + caminho_ajustado[-99:]
 
         return caminho_ajustado
+
+
+class JanelaRegistroDevencedor(JanelaPadrao):
+    def __init__(self, master: Frame, configuracoes, tabelas, impressao):
+        self.root = master
+
+        super().__init__(self.root, configuracoes, tabelas, impressao)
+
+        self._configura_formulario_de_vencedor()
+
+    def _configura_formulario_de_vencedor(self):
+        Label(self.root, text='teste').pack()

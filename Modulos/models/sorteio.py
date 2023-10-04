@@ -5,7 +5,7 @@ from Modulos.models.produto import Produto
 
 
 class Sorteio(Frame):
-    def __init__(self, master: Frame, nome_do_sorteio=None):
+    def __init__(self, master: Frame, nome_do_sorteio):
         super(Sorteio, self).__init__(master)
         self._nome = nome_do_sorteio
         self._premios = ()

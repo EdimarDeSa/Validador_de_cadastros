@@ -7,15 +7,17 @@ from ..arquivo import AbreArquivo
 from ..funcoes_sanitizacao import sanitiza_cpf, sanitiza_nome
 # from ..busca_cep import Cep
 from ..imprimir import Impressao
-from Modulos.constants import CPF, VALIDADE_CPF, NOME, DUPLICADA, COLABORADOR, COLUNAS_SERVICO_IMPRESSORAS
+from Modulos.models.sorteio import Sorteio, Produto
+from Modulos.constants import *
 
 
 class Tabelas:
-
     def __init__(self, impressao: Impressao) -> None:
         self.__arquivo = AbreArquivo()
         self.__impressao = impressao
         self.__docbr = vdb.CPF()
+
+        self.__tb_sorteios = None
 
         self.__caminho_tb_inscritos = None
         self.__tb_inscritos = None
@@ -113,11 +115,11 @@ class Tabelas:
 
         # Thread(target=self.__busca_enderecos).start()
 
-    def __busca_enderecos(self):
-        informacoes_cep = self.__tb_inscricoes_validas.CEP.apply(lambda cep: Cep(cep).series)
-        self.__tb_inscricoes_validas = self.__tb_inscricoes_validas.merge(informacoes_cep, right_index=True,
-                                                                          left_index=True)
-        self.busca = True
+    # def __busca_enderecos(self):
+    #     informacoes_cep = self.__tb_inscricoes_validas.CEP.apply(lambda cep: Cep(cep).series)
+    #     self.__tb_inscricoes_validas = self.__tb_inscricoes_validas.merge(informacoes_cep, right_index=True,
+    #                                                                       left_index=True)
+    #     self.busca = True
 
     @property
     def get_total_cadastros_repetidos(self) -> int:
@@ -157,10 +159,18 @@ class Tabelas:
     def vencedor_exists(self, cpf: str):
         return any(self.__tb_inscricoes_validas[CPF] == cpf)
 
-    def register_winner(self, cpf: str):
+    def registra_vencedor(self, cpf: str):
         dados_vencedor: pd.DataFrame = self.__tb_inscricoes_validas.query(f'{CPF}=="{cpf}"')
         self.__tb_vencedores = pd.concat([self.__tb_vencedores, dados_vencedor], ignore_index=True)
 
     def salva_tabela(self, nome_da_tabela: Literal['tb_vencedores', 'tb_inscricoes_validas'], caminho: str):
         tabela: pd.DataFrame = getattr(self, f'get_{nome_da_tabela}')
         return self.__arquivo.salva_arquivo_filtrado(tabela, caminho, nome_da_tabela)
+
+    def add_sorteio(self, lista_de_sorteios: list[Sorteio]):
+        lista_premios = [
+            [sorteio.nome_do_sorteio] + premio.valores
+            for sorteio in lista_de_sorteios
+            for premio in sorteio.premios
+        ]
+        self.__tb_sorteios = pd.DataFrame(lista_premios, columns=["sorteio"] + NOMES_DAS_COLUNAS)

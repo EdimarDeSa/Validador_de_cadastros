@@ -48,7 +48,7 @@ COLUNAS_SERVICO_IMPRESSORAS = ['JobId', 'pPrinterName', 'pMachineName', 'pUserNa
 
 COLUNAS_DA_TELA_DE_SORTEIOS = [
     dict(text="Código", width=120),
-    dict(text="Nome", width=350),
+    dict(text="Nome", width=370),
     dict(text="Qtd", width=40),
     dict(text="CC", width=80),
     dict(text="Fechamento CC", width=120),
