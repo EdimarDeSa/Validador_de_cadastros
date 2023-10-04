@@ -6,7 +6,7 @@ from Modulos.constants import *
 from Modulos.configuracoes import Configuracoes
 from Modulos.imprimir import Impressao
 from Modulos.models import Tabelas
-from Modulos.janelas.janelas import JanelaImpressao
+from Modulos.janelas.janelas import JanelaImpressao, JanelaSorteios
 from Modulos.imagens import Imagens
 
 
@@ -33,9 +33,9 @@ class Main(Window):
         self.notebook = Notebook(self)
         self.notebook.pack(fill=BOTH, expand=True)
 
-        # tab_registro_de_campanha = Frame(self)
-        # self.notebook.add(tab_registro_de_campanha, text='Registro de sorteios')
-        # JanelaSorteios(tab_registro_de_campanha, self.configuracoes.py, self.tabelas, self.impressao)
+        tab_registro_de_campanha = Frame(self)
+        self.notebook.add(tab_registro_de_campanha, text='Registro de sorteios')
+        JanelaSorteios(tab_registro_de_campanha, self.configuracoes, self.tabelas, self.impressao)
 
         tab_impressao = Frame(self)
         self.notebook.add(tab_impressao, text='Validação e impressão')
@@ -51,8 +51,8 @@ class Main(Window):
         dimensoes = {
             'width': 1200,
             'height': 500,
-            'pos_x': self.__calcula_posicao_x,
-            'pos_y': self.__calcula_posicao_y,
+            'pos_x': self.calcula_posicao_x_root,
+            'pos_y': self.calcula_posicao_y_root,
         }
 
         # tela_selecionada = self.notebook.:
@@ -62,12 +62,12 @@ class Main(Window):
 
         self.geometry(f"{width}x{height}+{pos_x}+{pos_y}")
 
-    def __calcula_posicao_x(self, largura_da_janela) -> int:
+    def calcula_posicao_x_root(self, largura_da_janela) -> int:
         largura_livre_do_monitor = self.winfo_screenwidth() - largura_da_janela
         x_inicial = largura_livre_do_monitor // 2
         return x_inicial
 
-    def __calcula_posicao_y(self, altura_da_janela) -> int:
+    def calcula_posicao_y_root(self, altura_da_janela) -> int:
         altura_livre_do_monitor = self.winfo_screenheight() - altura_da_janela
         y_inicial = altura_livre_do_monitor // 2
         return y_inicial

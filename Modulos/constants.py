@@ -1,3 +1,6 @@
+from ttkbootstrap.constants import *
+
+
 CODECS: list = ['ascii', 'big5', 'big5hkscs', 'cp037', 'cp273', 'cp424', 'cp437', 'cp500', 'cp720', 'cp737', 'cp775',
                 'cp850', 'cp852', 'cp855', 'cp856', 'cp857', 'cp858', 'cp860', 'cp861', 'cp862', 'cp863', 'cp864',
                 'cp865', 'cp866', 'cp869', 'cp874', 'cp875', 'cp932', 'cp949', 'cp950', 'cp1006', 'cp1026', 'cp1125',
@@ -24,15 +27,17 @@ CODECS.reverse()
 
 SEPARADORES: set = {',', ';', '\t'}
 
-EXTENSOES: list[tuple[str, str]] = [('Todos os Arquivos', '*.csv;*.txt;*.xlsx'), ('Arquivos CSV', '*.csv'),
-    ('Arquivos do Excel', '*.xlsx'), ('Arquivo de texto', '*.txt'), ]
+EXTENSOES: list[tuple[str, str]] = [
+    ('Todos os Arquivos', '*.csv;*.xlsx;*.txt'),
+    ('Arquivos CSV', '*.csv'),
+    ('Arquivos do Excel', '*.xlsx'),
+    ('Arquivo de texto', '*.txt'),
+]
 
 EXTENSAO_DEFAULT = '.csv'
 
-NOME_PARTICIPANTE: str = 'Nome completo'
-
+NOME_PARTICIPANTE = NOME = 'Nome completo'
 STRING_COLUNA_CPF: str = 'CPF (sem pontos e traço ex: 12345678900)'  # Depricated
-NOME: str = 'Nome completo'
 CPF: str = 'CPF'
 VALIDADE_CPF: str = 'Validade_cpf'
 DUPLICADA: str = 'Duplicada'
@@ -40,5 +45,17 @@ COLABORADOR: str = 'Colaborador'
 
 COLUNAS_SERVICO_IMPRESSORAS = ['JobId', 'pPrinterName', 'pMachineName', 'pUserName', 'pDocument', 'pDatatype',
                                'pStatus', 'Status', 'Priority', 'Position', 'TotalPages', 'PagesPrinted']
+
+COLUNAS_DA_TELA_DE_SORTEIOS = [
+    dict(text="Código", width=120),
+    dict(text="Nome", width=350),
+    dict(text="Qtd", width=40),
+    dict(text="CC", width=80),
+    dict(text="Fechamento CC", width=120),
+    dict(text="Responsável CC", width=200)
+]
+
+LINHAS_TESTE = [(str(11111111111 * i).zfill(11), f"Produto {i}", f"{i}", "12345", "12/01/2024", "Marta Rosa Nunes") for i in range(7)]
+NOMES_DAS_COLUNAS = ['codigo', 'nome', 'quantidade', 'cc', 'data_fechamento_cc', 'responsavel_cc']
 
 TEMA = 'minty'
