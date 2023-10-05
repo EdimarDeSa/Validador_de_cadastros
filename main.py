@@ -1,4 +1,5 @@
 import sys
+import os
 
 from ttkbootstrap import *
 
@@ -6,20 +7,21 @@ from Modulos.constants import *
 from Modulos.configuracoes import Configuracoes
 from Modulos.imprimir import Impressao
 from Modulos.models import Tabelas
-from Modulos.janelas.janelas import JanelaImpressao, JanelaSorteios, JanelaRegistroDevencedor
+from Modulos.janelas.janelas import JanelaImpressao, JanelaSorteios, JanelaRegistroDeVencedor
 from Modulos.imagens import Imagens
 
 
 class Main(Window):
     def __init__(self):
         self.configuracoes = Configuracoes()
-        Window.__init__(self, iconphoto='.\icons\icons8-lottery-50.png', **self.configuracoes.root_parametros)
+        Window.__init__(self, iconphoto='./icons/icons8-lottery-50.png')
         self.impressao = Impressao()
         self.tabelas = Tabelas(self.impressao)
         self._imagens = Imagens()
 
         self.configura_janela()
-        self.inicia_widgets()
+        self.inicia_variaveis_globais()
+        self.inicia_ui()
         self.redimenciona_tela()
 
         self.mainloop()
@@ -28,52 +30,38 @@ class Main(Window):
         self.resizable(False, False)
         self.title('Validador de cadastros')
         self.protocol("WM_DELETE_WINDOW", self.close_evet)
+        self.style.theme_use(**self.configuracoes.root_parametros)
 
-    def inicia_widgets(self):
+    def inicia_ui(self):
         self.notebook = Notebook(self)
         self.notebook.pack(fill=BOTH, expand=True)
+        self.notebook.enable_traversal()
 
-        tab_registro_de_campanha = Frame(self)
+        tab_registro_de_campanha = Frame(self.notebook, name='tab_registro_de_campanha')
         self.notebook.add(tab_registro_de_campanha, text='Registro de sorteios')
-        JanelaSorteios(tab_registro_de_campanha, self.configuracoes, self.tabelas)
+        JanelaSorteios(tab_registro_de_campanha, self.configuracoes, self.tabelas,
+                       list_sort=self._lista_de_sorteios)
 
-        # tab_impressao = Frame(self)
-        # self.notebook.add(tab_impressao, text='Validação e impressão')
-        # JanelaImpressao(tab_impressao, self.configuracoes, self.tabelas, self.impressao)
+        tab_impressao = Frame(self.notebook, name='tab_impressao')
+        self.notebook.add(tab_impressao, text='Validação e impressão')
+        JanelaImpressao(tab_impressao, self.configuracoes, self.tabelas, self.impressao)
 
-        tab_registro_de_vencedor = Frame(self)
+        tab_registro_de_vencedor = Frame(self.notebook, name='tab_registro_de_vencedor')
         self.notebook.add(tab_registro_de_vencedor, text='Registro de vencedor')
-        JanelaRegistroDevencedor(tab_registro_de_vencedor, self.configuracoes, self.tabelas)
-
-        self.notebook.bind('<Button-1>', lambda e: print(e.widget.__dict__))
+        JanelaRegistroDeVencedor(tab_registro_de_vencedor, self.configuracoes, self.tabelas,
+                                 list_sort=self._lista_de_sorteios)
 
         # frame_graficos = Frame(master=self.notebook, **self.configuracoes.py.frame_parametros, name='frame_graficos')
         # self.notebook.add(frame_graficos, state='hidden', text='Graficos')
 
+    def inicia_variaveis_globais(self):
+        self._lista_de_sorteios = []
+
     def redimenciona_tela(self):
-        dimensoes = {
-            'width': 1200,
-            'height': 500,
-            'pos_x': self.calcula_posicao_x_root,
-            'pos_y': self.calcula_posicao_y_root,
-        }
-
-        # tela_selecionada = self.notebook.:
-
-        width, height = dimensoes['width'], dimensoes['height']
-        pos_x, pos_y = dimensoes['pos_x'](width), dimensoes['pos_y'](height)
-
-        self.geometry(f"{width}x{height}+{pos_x}+{pos_y}")
-
-    def calcula_posicao_x_root(self, largura_da_janela) -> int:
-        largura_livre_do_monitor = self.winfo_screenwidth() - largura_da_janela
-        x_inicial = largura_livre_do_monitor // 2
-        return x_inicial
-
-    def calcula_posicao_y_root(self, altura_da_janela) -> int:
-        altura_livre_do_monitor = self.winfo_screenheight() - altura_da_janela
-        y_inicial = altura_livre_do_monitor // 2
-        return y_inicial
+        largura = 1200
+        altura = 500
+        self.geometry(f"{largura}x{altura}")
+        self.place_window_center()
 
     @staticmethod
     def close_evet():

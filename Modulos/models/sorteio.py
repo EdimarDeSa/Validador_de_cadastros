@@ -30,7 +30,7 @@ class Sorteio(Frame):
 
     def atualiza_premios(self, premios):
         self._limpa_tabela()
-        self._premios = premios
+        self._premios = tuple(premios)
         tamnhos_das_colunas = {
             0: 100,
             2: 300,
@@ -66,7 +66,7 @@ class Sorteio(Frame):
         self._vencedor = vencedor
 
     @property
-    def premios(self):
+    def premios(self) -> tuple[Produto]:
         return self._premios
 
     @property

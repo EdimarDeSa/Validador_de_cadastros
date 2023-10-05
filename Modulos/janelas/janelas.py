@@ -100,27 +100,31 @@ class CollapsingFrame(ScrolledFrame):
 
 
 class JanelaPadrao:
-    def __init__(self, master: Frame, configuracoes: Configuracoes, tabelas: Tabelas, impressao: Impressao = None):
+    def __init__(self, master: Frame, configuracoes: Configuracoes, tabelas: Tabelas, impressao: Impressao = None, **kwargs):
         self.master = master
         self.configuracoes = configuracoes
         self.tabelas = tabelas
         self.impressao = impressao
         self.imagens = Imagens()
+        self.reg_verifica_digito_numerico = master.register(self.verifica_digito_numerico)
+
+    @staticmethod
+    def verifica_digito_numerico(entrada: str):
+        return entrada.isnumeric() or entrada == ''
 
 
 # noinspection PyArgumentList
 class JanelaSorteios(JanelaPadrao):
-    def __init__(self, master: Frame, configuracoes, tabelas):
+    def __init__(self, master: Frame, configuracoes, tabelas, **kwargs):
         super().__init__(master, configuracoes, tabelas)
 
         self.var_sorteio_atual: Sorteio = None
         self.tabela_de_produtos: Tableview = None
-        self.master.lista_de_sorteios: CollapsingFrame = None
         self.var_caminho_sorteio = StringVar(value="Clique para procurar")
         self.var_caminho_tabela_de_precos = StringVar(value="Clique para procurar")
         self.var_formulario_de_produto_aberto = False
         self.var_sorteio_em_edicao = False
-        self.var_lista_de_sorteios = []
+        self.var_lista_de_sorteios: list[Sorteio] = kwargs.get('list_sort')
 
         frame_produtos = Frame(master)
         frame_produtos.place(relx=0.005, rely=0.01, relheight=0.49, relwidth=0.99)
@@ -130,8 +134,15 @@ class JanelaSorteios(JanelaPadrao):
         self.frame_de_sorteios.place(relx=0.005, rely=0.51, relheight=0.49, relwidth=0.99)
         self.inicia_frame_sorteios(self.frame_de_sorteios)
 
+        # teste
+        for _ in range(8):
+            for row in LINHAS_TESTE:
+                self.tabela_de_produtos.insert_row(values=list(row))
+            self.tabela_de_produtos.load_table_data()
+            self.salva_sorteio()
+
     def inicia_frame_produtos(self, master: Frame):
-        self.tabela_de_produtos = Tableview(master, coldata=COLUNAS_DA_TELA_DE_SORTEIOS, rowdata=LINHAS_TESTE)
+        self.tabela_de_produtos = Tableview(master, coldata=COLUNAS_DA_TELA_DE_SORTEIOS)
         self.tabela_de_produtos.place(relx=0, rely=0, relwidth=0.79, relheight=1)
 
         Button(
@@ -151,18 +162,18 @@ class JanelaSorteios(JanelaPadrao):
         ).place(relx=0.8, rely=0.8, relwidth=0.19)
 
     def inicia_frame_sorteios(self, master):
-        self.lista_de_sorteios = CollapsingFrame(master)
-        self.lista_de_sorteios.place(relx=0, rely=0, relwidth=0.79, relheight=1)
+        self.tela_retratil_sorteios = CollapsingFrame(master)
+        self.tela_retratil_sorteios.place(relx=0, rely=0, relwidth=0.79, relheight=1)
 
-        self.var_sorteio_atual = Sorteio(self.lista_de_sorteios, self.checa_nome_do_sorteio)
+        self.var_sorteio_atual = Sorteio(self.tela_retratil_sorteios, self.checa_nome_do_sorteio)
 
-        # Button(
-        #     master, text="Importar sorteios", command='', style=PRIMARY
-        # ).place(relx=0.8, rely=0.3, relwidth=0.19)
-        #
-        # Button(
-        #     master, text="Exportar sorteios", command='', style=INFO
-        # ).place(relx=0.8, rely=0.5, relwidth=0.19)
+        Button(
+            master, text="Importar sorteios", state=DISABLED, style=PRIMARY
+        ).place(relx=0.8, rely=0.3, relwidth=0.19)
+
+        Button(
+            master, text="Exportar sorteios", state=DISABLED, style=INFO
+        ).place(relx=0.8, rely=0.5, relwidth=0.19)
 
     def abre_formulario_de_produto(
             self, codigo='', nome_do_produto='', quantidade='1', centro_de_custos='23504',
@@ -181,8 +192,6 @@ class JanelaSorteios(JanelaPadrao):
             position=(self.master.winfo_rootx(), self.master.winfo_rooty())
         )
 
-        reg_verifica_digito_numerico = self.top.register(self.verifica_digito_numerico)
-
         self.top.protocol("WM_DELETE_WINDOW", self.fechar_formulario_de_produto)
         self.top.bind('<FocusIn>', self.verifica_info)
         self.top.bind('<Key>', self.verifica_info)
@@ -190,7 +199,7 @@ class JanelaSorteios(JanelaPadrao):
         # ------- PRIMEIRA LINHA ------- #
 
         Label(self.top, text="Código", **self.configuracoes.label_parametros).place(x=10, y=10)
-        self.campo_codigo = Entry(self.top, validatecommand=(reg_verifica_digito_numerico, '%P'), validate='key',
+        self.campo_codigo = Entry(self.top, validatecommand=(self.reg_verifica_digito_numerico, '%P'), validate='key',
                                   **self.configuracoes.entry_parametros)
         self.campo_codigo.place(x=10, y=40, width=200)
         self.campo_codigo.insert(0, codigo)
@@ -203,7 +212,7 @@ class JanelaSorteios(JanelaPadrao):
         self.campo_nome_do_produto.insert(0, nome_do_produto)
 
         Label(self.top, text="Quantidade", **self.configuracoes.label_parametros).place(x=640, y=10)
-        self.campo_quantidade = Entry(self.top, validatecommand=(reg_verifica_digito_numerico, '%P'), validate='key',
+        self.campo_quantidade = Entry(self.top, validatecommand=(self.reg_verifica_digito_numerico, '%P'), validate='key',
                                       **self.configuracoes.entry_parametros)
         self.campo_quantidade.place(x=640, y=40, width=150)
         self.campo_quantidade.insert(0, quantidade)
@@ -211,7 +220,7 @@ class JanelaSorteios(JanelaPadrao):
         # ------- SEGUNDA LINHA ------- #
 
         Label(self.top, text="Centro de Custos", **self.configuracoes.label_parametros).place(x=10, y=110)
-        self.campo_centro_de_custos = Entry(self.top, validatecommand=(reg_verifica_digito_numerico, '%P'),
+        self.campo_centro_de_custos = Entry(self.top, validatecommand=(self.reg_verifica_digito_numerico, '%P'),
                                             validate='key', **self.configuracoes.entry_parametros)
         self.campo_centro_de_custos.place(x=10, y=140, width=200)
         self.campo_centro_de_custos.insert(0, centro_de_custos)
@@ -325,7 +334,7 @@ class JanelaSorteios(JanelaPadrao):
 
         # Cria novo sorteio se não estiver em edição
         if not self.var_sorteio_em_edicao:
-            self.lista_de_sorteios.add(
+            self.tela_retratil_sorteios.add(
                 self.var_sorteio_atual, self.checa_nome_do_sorteio, edita_sorteio=self.edita_sorteio
             )
             self.var_lista_de_sorteios.append(self.var_sorteio_atual)
@@ -333,7 +342,7 @@ class JanelaSorteios(JanelaPadrao):
         self.tabelas.add_sorteio(self.var_lista_de_sorteios)
 
         # Cria novo objeto de sorteio com nome sequencial à quantidade de sorteios
-        self.var_sorteio_atual = Sorteio(self.lista_de_sorteios, self.checa_nome_do_sorteio)
+        self.var_sorteio_atual = Sorteio(self.tela_retratil_sorteios, self.checa_nome_do_sorteio)
 
         self.limpa_tabela_de_produtos()
         self.var_sorteio_em_edicao = False
@@ -345,10 +354,6 @@ class JanelaSorteios(JanelaPadrao):
     @property
     def get_iids_selecionados(self) -> list:
         return list(self.tabela_de_produtos.view.selection())
-
-    @staticmethod
-    def verifica_digito_numerico(entrada: str):
-        return entrada.isnumeric()
 
     @staticmethod
     def verifica_info(event: tkinter.Event):
@@ -378,7 +383,7 @@ class JanelaImpressao(JanelaPadrao):
     linha_5 = linha_4 + pula_linha
     linha_6 = linha_5 + pula_linha
 
-    def __init__(self, master: Frame, configuracoes, tabelas, impressao):
+    def __init__(self, master: Frame, configuracoes, tabelas, impressao, **kwargs):
         self.root = master
 
         super().__init__(self.root, configuracoes, tabelas, impressao)
@@ -393,6 +398,13 @@ class JanelaImpressao(JanelaPadrao):
         self.var_cpf_sorteado = StringVar()
 
         self.inicia_form_impressao()
+
+        # teste
+        self.data.entry.delete(0, END)
+        self.data.entry.insert(0, '28/09/2023')
+        self.abre_tb_inscritos(Path('C:/Users/Edimar/Documents/GitHub/Validador_de_cadastros/data/9-28-2023-Evento_de_lancamentos-_Abril.csv').resolve())
+        self.abre_tb_colaboradores(Path('C:/Users/Edimar/Documents/GitHub/Validador_de_cadastros/data/Colaboradores.csv').resolve())
+        self.escreve_resultado_de_verificacao()
 
     def inicia_form_impressao(self):
         frame_impressao = Frame(self.root)
@@ -460,10 +472,7 @@ class JanelaImpressao(JanelaPadrao):
 
     def inicia_widget_localizazao_de_arquivo(self, master: Frame, var, linha, comando):
         Label(master, textvariable=var, **self.configuracoes.label_caminho_parametros).place(relx=0.01, rely=linha)
-
-        Button(
-            master, image=self.imagens.img_lupa, command=comando, text='Procurar', style=OUTLINE
-        ).place(relx=0.86, rely=linha)
+        Button(master, image=self.imagens.img_lupa, command=comando, text='Procurar').place(relx=0.86, rely=linha)
 
     def ao_selecionra_impressora(self, event: tkinter.Event):
         widget: Combobox = event.widget
@@ -485,8 +494,9 @@ class JanelaImpressao(JanelaPadrao):
 
         self.master.after(500, lambda: self.bt_inicia_impressao.place(relx=0.26, rely=self.linha_6))
 
-    def abre_tb_inscritos(self):
-        self.tabelas.inicia_tb_inscritos(data=self.data.entry.get())
+    def abre_tb_inscritos(self, caminho=None):
+
+        self.tabelas.inicia_tb_inscritos(self.data.entry.get(), caminho)
 
         caminho: Path = self.tabelas.get_caminho_tb_inscritos
         if not caminho:
@@ -498,8 +508,8 @@ class JanelaImpressao(JanelaPadrao):
         self.bt_inicia_impressao.place_forget()
         self.bt_inicia_verificacao.place(relx=0.01, rely=self.linha_6)
 
-    def abre_tb_colaboradores(self):
-        self.tabelas.inicia_tb_colaboradores()
+    def abre_tb_colaboradores(self, caminho=None):
+        self.tabelas.inicia_tb_colaboradores(caminho)
 
         caminho = self.tabelas.get_caminho_tb_colaboradores
         if not caminho:
@@ -542,30 +552,35 @@ class JanelaImpressao(JanelaPadrao):
         return caminho_ajustado
 
 
-class JanelaRegistroDevencedor(JanelaPadrao):
-    def __init__(self, master: Frame, configuracoes, tabelas):
+class JanelaRegistroDeVencedor(JanelaPadrao):
+    def __init__(self, master: Frame, configuracoes, tabelas, **kwargs):
         super().__init__(master, configuracoes, tabelas)
 
-        form_vencedor = Frame(master)
-        form_vencedor.place(relx=0, rely=0, relwidth=0.48, relheight=1)
-        self._configura_formulario_de_vencedor(form_vencedor)
+        self.lista_de_sorteios: list[Sorteio] = kwargs.get('list_sort')
+        self.form_vencedor = Frame(master)
+        self.form_vencedor.place(relx=0, rely=0, relwidth=0.48, relheight=1)
+        self._configura_formulario_de_vencedor(self.form_vencedor)
 
         Separator(master, orient=VERTICAL).place(relx=0.49, rely=0, relwidth=0.02, relheight=1)
 
-        form_sorteios = ScrolledFrame(master, autohide=True)
-        form_sorteios.place(relx=0.52, rely=0, relwidth=0.48, relheight=1)
+        self.form_sorteios = ScrolledFrame(master, autohide=True)
+        self.form_sorteios.place(relx=0.52, rely=0, relwidth=0.48, relheight=1)
 
+        master.bind('<Expose>', self._atualiza_sorteios)
 
     def _configura_formulario_de_vencedor(self, master: Frame):
         Label(
-            master, text='Buscar de participante', anchor=CENTER, **self.configuracoes.label_titulos
+            master, text='Busca de participante', anchor=CENTER, **self.configuracoes.label_titulos
         ).place(relx=0, rely=0.01, relwidth=1)
 
         conf_entrys = self.configuracoes.entry_parametros.copy()
         conf_entrys['state'] = READONLY
 
         Label(master, text='CPF:', **self.configuracoes.label_parametros).place(relx=0.01, rely=0.105)
-        Entry(master, name='entry_cpf', **self.configuracoes.entry_parametros).place(relx=0.2, rely=0.1, relwidth=0.75)
+        Entry(
+            master, name='entry_cpf', **self.configuracoes.entry_parametros, validate='key',
+            validatecommand=(self.reg_verifica_digito_numerico, '%P')
+        ).place(relx=0.2, rely=0.1, relwidth=0.75)
 
         Label(
             master, name='frame_info', anchor=CENTER, **self.configuracoes.label_caminho_parametros
@@ -586,16 +601,98 @@ class JanelaRegistroDevencedor(JanelaPadrao):
         Label(master, text='Telefone:', **self.configuracoes.label_parametros).place(relx=0.01, rely=0.705)
         Entry(master, name='entry_telefone', **conf_entrys).place(relx=0.2, rely=0.7, relwidth=0.75)
 
-        Button(master, text='Procurar', bootstyle=INFO, command='').place(relx=0.1, rely=0.85, relwidth=0.3)
-        Button(master, text='Salvar', bootstyle=SUCCESS, command='').place(relx=0.6, rely=0.85, relwidth=0.3)
+        self.btn_salvar = Button(master, text='Salvar')
+        self.btn_salvar.place(relx=0.35, rely=0.85, relwidth=0.3)
 
         master.children.get('entry_cpf').focus_set()
-        master.children.get('frame_info').configure(text='Procurando...')
+        master.children.get('entry_cpf').bind('<KeyRelease>', self.busca_participante)
 
-    def _configura_form_sorteios(self, master):
-        sorteios = self.tabelas.get_tb_sorteios_valores()
-        if not sorteios:
+    def _registra_vencedor(self, nome_sorteio: str):
+        frame_sorteio = self.form_sorteios.children.get(f'frame_{nome_sorteio.lower()}')
+        nome_ganhador = self.form_vencedor.children.get('entry_nome').get()
+        cpf_ganhador = self.form_vencedor.children.get('entry_cpf').get()
+        '2988965838'
+        frame_sorteio.children.get(f'label_{nome_sorteio.lower()}').configure(text=f'{nome_sorteio} - {nome_ganhador}')
+        for sorteio in self.lista_de_sorteios:
+            if sorteio.nome_do_sorteio == nome_sorteio:
+                sorteio.registra_vencedor(nome_ganhador)
+
+    def _atualiza_sorteios(self, _):
+        self.deleta_form_sorteios()
+        if not self.lista_de_sorteios:
             return
-        for nome_sorteio, premios in sorteios:
-            Button(master, text=nome_sorteio).pack()
-            print(premios)
+        for sorteio in self.lista_de_sorteios:
+            nome_sorteio = sorteio.nome_do_sorteio
+
+            subframe = Frame(self.form_sorteios, name=f'frame_{nome_sorteio.lower()}')
+            subframe.pack(fill=BOTH, expand=True, ipady=10)
+            subframe.columnconfigure(0, weight=1)
+
+            titulo = nome_sorteio if not sorteio.vencedor else f'{nome_sorteio} - {sorteio.vencedor}'
+            Label(
+                subframe, text=titulo, name=f'label_{nome_sorteio.lower()}', **self.configuracoes.label_titulos
+            ).grid(row=0, columnspan=2)
+
+            for i, premio in enumerate(sorteio.premios):
+                Label(
+                    subframe, text=premio.valores[1], justify=LEFT, **self.configuracoes.label_parametros
+                ).grid(row=i+1, column=0, pady=5, sticky=W)
+
+            bt_row = (len(sorteio.premios) + 1) // 2
+            Button(
+                subframe, text=f'Abir {nome_sorteio}', command=lambda s=nome_sorteio: self._selecionar_sorteado(s)
+            ).grid(row=bt_row, column=1, padx=(0, 20))
+
+            Separator(self.form_sorteios, orient=HORIZONTAL).pack(fill=X, expand=True, ipady=3, anchor=CENTER)
+
+    def _reset_widgets(self, widget):
+        widget.configure(bootstyle=DEFAULT)
+        for child in widget.winfo_children():
+            self._reset_widgets(child)
+
+    @staticmethod
+    def _set_selected_style(widget):
+        widget.configure(bootstyle=INFO)
+
+    def _selecionar_sorteado(self, nome_sorteio):
+        for child in self.form_sorteios.winfo_children():
+            self._reset_widgets(child)
+
+        sorteio_widgets = self.form_sorteios.children.get(f'frame_{nome_sorteio.lower()}')
+        if sorteio_widgets:
+            for child in sorteio_widgets.winfo_children():
+                self._set_selected_style(child)
+
+        self.btn_salvar.configure(command=lambda n=nome_sorteio: self._registra_vencedor(n))
+
+    def deleta_form_sorteios(self):
+        def deleta_tela(c):
+            for sub_c in c.winfo_children():
+                deleta_tela(sub_c)
+            c.destroy()
+
+
+        for child in self.form_sorteios.winfo_children():
+            deleta_tela(child)
+
+    def busca_participante(self, e: tkinter.Event):
+        def altera_texto(w_name, data):
+            self.form_vencedor.children.get(w_name).configure(state=NORMAL)
+            self.form_vencedor.children.get(w_name).delete(0, END)
+            self.form_vencedor.children.get(w_name).insert(0, data)
+            self.form_vencedor.children.get(w_name).configure(state=READONLY)
+
+        cpf = e.widget.get()
+        if len(cpf) < 11:
+            return
+        self.form_vencedor.children.get('frame_info').configure(text='Procurando...')
+        participante = self.tabelas.busca_vencedor(cpf)
+        if participante.any():
+            self.form_vencedor.children.get('frame_info').configure(text='')
+            dados = participante[0]
+            print(dados)
+            altera_texto('entry_nome', dados[0])
+            altera_texto('entry_cep', dados[8])
+            altera_texto('entry_endereco', dados[2])
+            altera_texto('entry_email', dados[3])
+            altera_texto('entry_telefone', dados[5])

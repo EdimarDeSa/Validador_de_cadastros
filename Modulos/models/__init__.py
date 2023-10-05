@@ -59,12 +59,12 @@ class Tabelas:
         log = '\n'.join(df['pDocument'])
         return log
 
-    def inicia_tb_inscritos(self, data: str):
-        caminho = self.__arquivo.abre_documento()
+    def inicia_tb_inscritos(self, data: str, caminho=None):
+        if caminho is None:
+            caminho = self.__arquivo.abre_documento('Selecione o arquivo de inscritos')
 
         if not caminho:
             return
-
         df_sujo = self.__arquivo.abre_dataframe(caminho)
         df_com_data = df_sujo.assign(**{
             'Dia_do_evento': lambda df=df_sujo: df['Data'].apply(lambda x: str(x).split()[0] == data),
@@ -83,8 +83,9 @@ class Tabelas:
     def get_caminho_tb_inscritos(self):
         return self.__caminho_tb_inscritos
 
-    def inicia_tb_colaboradores(self):
-        caminho = self.__arquivo.abre_documento()
+    def inicia_tb_colaboradores(self, caminho=None):
+        if caminho is None:
+            caminho = self.__arquivo.abre_documento('Selecione o arquivo de colaboradores')
 
         if not caminho:
             return
@@ -158,9 +159,10 @@ class Tabelas:
     def vencedor_exists(self, cpf: str):
         return any(self.__tb_inscricoes_validas[CPF] == cpf)
 
-    def registra_vencedor(self, cpf: str):
+    def busca_vencedor(self, cpf: str):
+        cpf = self.__docbr.mask(sanitiza_cpf(cpf))
         dados_vencedor: pd.DataFrame = self.__tb_inscricoes_validas.query(f'{CPF}=="{cpf}"')
-        self.__tb_vencedores = pd.concat([self.__tb_vencedores, dados_vencedor], ignore_index=True)
+        return dados_vencedor.values
 
     def salva_tabela(self, nome_da_tabela: Literal['tb_vencedores', 'tb_inscricoes_validas'], caminho: str):
         tabela: pd.DataFrame = getattr(self, f'get_{nome_da_tabela}')
@@ -176,9 +178,6 @@ class Tabelas:
 
     def get_tb_sorteios_valores(self) -> [dict[list[Produto]], None]:
         sorteios = dict()
-        if not self.__tb_sorteios:
-            return None
-
         for sorteio in self.__tb_sorteios.values:
             chave, *infos = sorteio
             sorteios.setdefault(chave, []).append(Produto(*infos))

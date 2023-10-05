@@ -10,7 +10,7 @@ class Configuracoes:
         self._tamanho_da_fonte = 10
         self._estilo_da_fonte = 'Roboto'
         self._negrito = 'bold'
-        self._themename = 'minty'
+        self._themename = 'cyborg'
 
         self.abre_dados()
 
@@ -39,7 +39,7 @@ class Configuracoes:
 
     @property
     def __parametros_root(self) -> dict:
-        parametros = {'themename': self._themename, }
+        parametros = {'themename': self._themename}
         return parametros
 
     @property

@@ -55,7 +55,5 @@ COLUNAS_DA_TELA_DE_SORTEIOS = [
     dict(text="Responsável CC", width=200)
 ]
 
-LINHAS_TESTE = [(str(11111111111 * i).zfill(11), f"Produto {i}", f"{i}", "12345", "12/01/2024", "Marta Rosa Nunes") for i in range(7)]
+LINHAS_TESTE = [(str(11111111111 * i).zfill(11), f"Produto {i}", f"{i}", "12345", "12/01/2024", "Marta Rosa Nunes") for i in range(5)]
 NOMES_DAS_COLUNAS = ['codigo', 'nome', 'quantidade', 'cc', 'data_fechamento_cc', 'responsavel_cc']
-
-TEMA = 'minty'
