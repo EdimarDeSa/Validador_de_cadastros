@@ -17,18 +17,17 @@ class Tabelas:
         self.__impressao = impressao
         self.__docbr = vdb.CPF()
 
-        self.__tb_sorteios = None
+        self.__tb_sorteios: pd.DataFrame = None
+        self.__tb_vencedores: pd.DataFrame = None
 
-        self.__caminho_tb_inscritos = None
+        self.__caminho_tb_inscritos: pd.DataFrame = None
         self.__tb_inscritos = None
         self.__tb_inscricoes_validas = None
 
-        self.__caminho_tb_colaboradores = None
+        self.__caminho_tb_colaboradores: pd.DataFrame = None
         self.__tb_colaboradores = None
 
-        self.__tb_vencedores = None
-
-        self.__total_cadastros_repetidos = None
+        self.__total_cadastros_repetidos: pd.DataFrame = None
         self.__total_cpfs_invalidos = None
         self.__total_colaboradores_cadastrados = None
 
@@ -174,3 +173,14 @@ class Tabelas:
             for premio in sorteio.premios
         ]
         self.__tb_sorteios = pd.DataFrame(lista_premios, columns=["sorteio"] + NOMES_DAS_COLUNAS)
+
+    def get_tb_sorteios_valores(self) -> [dict[list[Produto]], None]:
+        sorteios = dict()
+        if not self.__tb_sorteios:
+            return None
+
+        for sorteio in self.__tb_sorteios.values:
+            chave, *infos = sorteio
+            sorteios.setdefault(chave, []).append(Produto(*infos))
+        return sorteios
+

@@ -1,36 +1,15 @@
-import ttkbootstrap as ttk
-from ttkbootstrap.tableview import Tableview
-from ttkbootstrap.constants import *
+from ttkbootstrap import *
 
-app = ttk.Window()
-colors = app.style.colors
 
-coldata = [
-    {"text": "LicenseNumber", "stretch": False, },
-    "CompanyName",
-    {"text": "UserCount", "stretch": False},
-]
+class CustomNoteBook(Frame):
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
 
-rowdata = [
-    ('A123', 'IzzyCo', 12),
-    ('A136', 'Kimdee Inc.', 45),
-    ('A158', 'Farmadding Co.', 36)
-]
+        self._quadro_de_botoe = Frame(self, style=kwargs.get('style'), border=DOTBOX)
+        self._quadro_de_botoe.pack(fill=X, expand=True, side=TOP)
 
-dt = Tableview(
-    master=app,
-    bootstyle=PRIMARY,
-    coldata=coldata,
-    rowdata=rowdata,
-    paginated=True,
-    searchable=True,
-    autofit=False,
-    autoalign=True,
-    stripecolor=(colors.light, None),
-    pagesize=10,
-    height=10,
-    delimiter=','
-)
-dt.pack(fill=BOTH, expand=YES, padx=10, pady=10)
 
-app.mainloop()
+if __name__ == '__main__':
+    root = Window()
+    CustomNoteBook(root)
+    root.mainloop()

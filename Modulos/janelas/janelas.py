@@ -12,6 +12,7 @@ from ttkbootstrap.style import Bootstyle
 from Modulos.configuracoes import Configuracoes
 from Modulos.imagens import Imagens
 from Modulos.imprimir import Impressao
+from Modulos.models import Tabelas
 from Modulos.log_panel import LogPanel
 from Modulos.models.produto import Produto
 from Modulos.models.sorteio import Sorteio
@@ -99,7 +100,7 @@ class CollapsingFrame(ScrolledFrame):
 
 
 class JanelaPadrao:
-    def __init__(self, master: Frame, configuracoes: Configuracoes, tabelas, impressao: Impressao):
+    def __init__(self, master: Frame, configuracoes: Configuracoes, tabelas: Tabelas, impressao: Impressao = None):
         self.master = master
         self.configuracoes = configuracoes
         self.tabelas = tabelas
@@ -109,12 +110,12 @@ class JanelaPadrao:
 
 # noinspection PyArgumentList
 class JanelaSorteios(JanelaPadrao):
-    def __init__(self, master: Frame, configuracoes, tabelas, impressao):
-        super().__init__(master, configuracoes, tabelas, impressao)
+    def __init__(self, master: Frame, configuracoes, tabelas):
+        super().__init__(master, configuracoes, tabelas)
 
         self.var_sorteio_atual: Sorteio = None
         self.tabela_de_produtos: Tableview = None
-        self.lista_de_sorteios: CollapsingFrame = None
+        self.master.lista_de_sorteios: CollapsingFrame = None
         self.var_caminho_sorteio = StringVar(value="Clique para procurar")
         self.var_caminho_tabela_de_precos = StringVar(value="Clique para procurar")
         self.var_formulario_de_produto_aberto = False
@@ -460,8 +461,9 @@ class JanelaImpressao(JanelaPadrao):
     def inicia_widget_localizazao_de_arquivo(self, master: Frame, var, linha, comando):
         Label(master, textvariable=var, **self.configuracoes.label_caminho_parametros).place(relx=0.01, rely=linha)
 
-        Button(master, image=self.imagens.img_lupa, command=comando, text='Procurar', style=OUTLINE).place(relx=0.86,
-                                                                                                           rely=linha)
+        Button(
+            master, image=self.imagens.img_lupa, command=comando, text='Procurar', style=OUTLINE
+        ).place(relx=0.86, rely=linha)
 
     def ao_selecionra_impressora(self, event: tkinter.Event):
         widget: Combobox = event.widget
@@ -541,12 +543,59 @@ class JanelaImpressao(JanelaPadrao):
 
 
 class JanelaRegistroDevencedor(JanelaPadrao):
-    def __init__(self, master: Frame, configuracoes, tabelas, impressao):
-        self.root = master
+    def __init__(self, master: Frame, configuracoes, tabelas):
+        super().__init__(master, configuracoes, tabelas)
 
-        super().__init__(self.root, configuracoes, tabelas, impressao)
+        form_vencedor = Frame(master)
+        form_vencedor.place(relx=0, rely=0, relwidth=0.48, relheight=1)
+        self._configura_formulario_de_vencedor(form_vencedor)
 
-        self._configura_formulario_de_vencedor()
+        Separator(master, orient=VERTICAL).place(relx=0.49, rely=0, relwidth=0.02, relheight=1)
 
-    def _configura_formulario_de_vencedor(self):
-        Label(self.root, text='teste').pack()
+        form_sorteios = ScrolledFrame(master, autohide=True)
+        form_sorteios.place(relx=0.52, rely=0, relwidth=0.48, relheight=1)
+
+
+    def _configura_formulario_de_vencedor(self, master: Frame):
+        Label(
+            master, text='Buscar de participante', anchor=CENTER, **self.configuracoes.label_titulos
+        ).place(relx=0, rely=0.01, relwidth=1)
+
+        conf_entrys = self.configuracoes.entry_parametros.copy()
+        conf_entrys['state'] = READONLY
+
+        Label(master, text='CPF:', **self.configuracoes.label_parametros).place(relx=0.01, rely=0.105)
+        Entry(master, name='entry_cpf', **self.configuracoes.entry_parametros).place(relx=0.2, rely=0.1, relwidth=0.75)
+
+        Label(
+            master, name='frame_info', anchor=CENTER, **self.configuracoes.label_caminho_parametros
+        ).place(relx=0.01, rely=0.205, relwidth=1)
+
+        Label(master, text='Nome:', **self.configuracoes.label_parametros).place(relx=0.01, rely=0.305)
+        Entry(master, name='entry_nome', **conf_entrys).place(relx=0.2, rely=0.3, relwidth=0.75)
+
+        Label(master, text='CEP:', **self.configuracoes.label_parametros).place(relx=0.01, rely=0.405)
+        Entry(master, name='entry_cep', **conf_entrys).place(relx=0.2, rely=0.4, relwidth=0.75)
+
+        Label(master, text='Endereço:', **self.configuracoes.label_parametros).place(relx=0.01, rely=0.505)
+        Entry(master, name='entry_endereco', **conf_entrys).place(relx=0.2, rely=0.5, relwidth=0.75)
+
+        Label(master, text='Email:', **self.configuracoes.label_parametros).place(relx=0.01, rely=0.605)
+        Entry(master, name='entry_email', **conf_entrys).place(relx=0.2, rely=0.6, relwidth=0.75)
+
+        Label(master, text='Telefone:', **self.configuracoes.label_parametros).place(relx=0.01, rely=0.705)
+        Entry(master, name='entry_telefone', **conf_entrys).place(relx=0.2, rely=0.7, relwidth=0.75)
+
+        Button(master, text='Procurar', bootstyle=INFO, command='').place(relx=0.1, rely=0.85, relwidth=0.3)
+        Button(master, text='Salvar', bootstyle=SUCCESS, command='').place(relx=0.6, rely=0.85, relwidth=0.3)
+
+        master.children.get('entry_cpf').focus_set()
+        master.children.get('frame_info').configure(text='Procurando...')
+
+    def _configura_form_sorteios(self, master):
+        sorteios = self.tabelas.get_tb_sorteios_valores()
+        if not sorteios:
+            return
+        for nome_sorteio, premios in sorteios:
+            Button(master, text=nome_sorteio).pack()
+            print(premios)

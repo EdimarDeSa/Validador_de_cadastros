@@ -35,15 +35,17 @@ class Main(Window):
 
         tab_registro_de_campanha = Frame(self)
         self.notebook.add(tab_registro_de_campanha, text='Registro de sorteios')
-        JanelaSorteios(tab_registro_de_campanha, self.configuracoes, self.tabelas, self.impressao)
+        JanelaSorteios(tab_registro_de_campanha, self.configuracoes, self.tabelas)
 
-        tab_impressao = Frame(self)
-        self.notebook.add(tab_impressao, text='Validação e impressão')
-        JanelaImpressao(tab_impressao, self.configuracoes, self.tabelas, self.impressao)
+        # tab_impressao = Frame(self)
+        # self.notebook.add(tab_impressao, text='Validação e impressão')
+        # JanelaImpressao(tab_impressao, self.configuracoes, self.tabelas, self.impressao)
 
         tab_registro_de_vencedor = Frame(self)
         self.notebook.add(tab_registro_de_vencedor, text='Registro de vencedor')
-        JanelaRegistroDevencedor(tab_registro_de_vencedor, self.configuracoes, self.tabelas, self.impressao)
+        JanelaRegistroDevencedor(tab_registro_de_vencedor, self.configuracoes, self.tabelas)
+
+        self.notebook.bind('<Button-1>', lambda e: print(e.widget.__dict__))
 
         # frame_graficos = Frame(master=self.notebook, **self.configuracoes.py.frame_parametros, name='frame_graficos')
         # self.notebook.add(frame_graficos, state='hidden', text='Graficos')
