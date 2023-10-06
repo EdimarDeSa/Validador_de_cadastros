@@ -47,13 +47,19 @@ COLUNAS_SERVICO_IMPRESSORAS = ['JobId', 'pPrinterName', 'pMachineName', 'pUserNa
                                'pStatus', 'Status', 'Priority', 'Position', 'TotalPages', 'PagesPrinted']
 
 COLUNAS_DA_TELA_DE_SORTEIOS = [
-    dict(text="Código", width=120),
-    dict(text="Nome", width=370),
-    dict(text="Qtd", width=40),
-    dict(text="CC", width=80),
-    dict(text="Fechamento CC", width=120),
-    dict(text="Responsável CC", width=200)
+    dict(text="Código", width=120), dict(text="Nome", width=370), dict(text="Qtd", width=40),
+    dict(text="CC", width=80), dict(text="Fechamento CC", width=120), dict(text="Responsável CC", width=200)
 ]
 
-LINHAS_TESTE = [(str(11111111111 * i).zfill(11), f"Produto {i}", f"{i}", "12345", "12/01/2024", "Marta Rosa Nunes") for i in range(5)]
-NOMES_DAS_COLUNAS = ['codigo', 'nome', 'quantidade', 'cc', 'data_fechamento_cc', 'responsavel_cc']
+COLUNAS_DA_TABELA_DE_PREMIOS = ['codigo', 'nome', 'quantidade', 'cc', 'data_fechamento_cc', 'responsavel_cc']
+
+COLUNAS_DA_TABELA_DE_PARTICIPANTES = [
+    'Nome completo', 'RG', 'Endereço completo', 'Email', 'Data de nascimento', 'Telefone',
+    'aceite_novidades', 'CPF', 'CEP', 'Data', 'Dia_do_evento', 'Duplicada', 'Validade_cpf', 'Colaborador'
+]
+
+LINHAS_TESTE = [
+    (
+        str(11111111111 * i).zfill(11), f"Produto {i}", f"{i}", "12345", "12/01/2024", "Marta Rosa Nunes"
+    ) for i in range(5)
+]

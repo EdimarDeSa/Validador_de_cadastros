@@ -1,6 +1,6 @@
 from os.path import dirname, join
 from pathlib import Path
-from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import askopenfilename, asksaveasfilename
 from tkinter.messagebox import showwarning
 
 import pandas as pd
@@ -20,7 +20,9 @@ class AbreArquivo:
         return Path(diretorio_documento).resolve() if '.' in diretorio_documento else None
 
     @staticmethod
-    def salva_arquivo_filtrado(arquivo: pd.DataFrame, caminho: str, tipo: str):
+    def salva_arquivo_filtrado(arquivo: pd.DataFrame, caminho: str = None, tipo: str = None):
+        if caminho is None:
+            caminho = asksaveasfilename(confirmoverwrite=True, defaultextension='xlsx')
         nome_documento = tipo + '.xlsx'
         caminho_para_salvar = join(dirname(caminho), nome_documento)
         arquivo.to_excel(caminho_para_salvar)

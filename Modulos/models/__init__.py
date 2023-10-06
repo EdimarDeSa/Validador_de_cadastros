@@ -2,6 +2,7 @@ from typing import Literal
 
 import validate_docbr as vdb
 import pandas as pd
+import openpyxl as excel
 
 from ..arquivo import AbreArquivo
 from ..funcoes_sanitizacao import sanitiza_cpf, sanitiza_nome
@@ -72,7 +73,7 @@ class Tabelas:
         df_limpo = df_com_data.query('Dia_do_evento==True')
 
         self.__tb_inscritos = df_limpo
-        self.__tb_inscricoes_validas = pd.DataFrame(columns=df_limpo.columns)
+        self.__tb_inscricoes_validas = pd.DataFrame(columns=COLUNAS_DA_TABELA_DE_PARTICIPANTES)
         self.__caminho_tb_inscritos = caminho
 
     @property
@@ -149,9 +150,6 @@ class Tabelas:
     def get_tb_inscricoes_validas(self):
         return self.__tb_inscricoes_validas
 
-    def inicia_tb_vencedores(self):
-        self.__tb_vencedores = pd.DataFrame(columns=self.__tb_inscricoes_validas.columns)
-
     @property
     def get_tb_vencedores(self):
         return self.__tb_vencedores
@@ -174,7 +172,7 @@ class Tabelas:
             for sorteio in lista_de_sorteios
             for premio in sorteio.premios
         ]
-        self.__tb_sorteios = pd.DataFrame(lista_premios, columns=["sorteio"] + NOMES_DAS_COLUNAS)
+        self.__tb_sorteios = pd.DataFrame(lista_premios, columns=["sorteio"] + COLUNAS_DA_TABELA_DE_PREMIOS)
 
     def get_tb_sorteios_valores(self) -> [dict[list[Produto]], None]:
         sorteios = dict()
@@ -182,4 +180,51 @@ class Tabelas:
             chave, *infos = sorteio
             sorteios.setdefault(chave, []).append(Produto(*infos))
         return sorteios
+
+    def exportar_tb_vencedores(self, lista_de_sorteios: list[Sorteio]):
+        dfs = []
+        colunas = COLUNAS_DA_TABELA_DE_PARTICIPANTES + ['sorteio'] + COLUNAS_DA_TABELA_DE_PREMIOS
+        wb = excel.Workbook()
+        wb.remove(wb.active)
+
+        for sorteio in lista_de_sorteios:
+            ws = wb.create_sheet(sorteio.nome_do_sorteio)
+            ws.cell(1, 1, sorteio.nome_do_sorteio)
+            ws.cell(2, 1, sorteio.nome_vencedor)
+            ws.cell(3, 1, 'CPF')
+            ws.cell(3, 2, sorteio.cpf_vencedor)
+            ws.cell(4, 1, 'RG')
+            ws.cell(4, 2, sorteio.rg_vencedor)
+            ws.cell(5, 1, 'Telefone')
+            ws.cell(5, 2, sorteio.telefone_vencedor)
+            ws.cell(6, 1, 'Email')
+            ws.cell(6, 2, sorteio.email_vencedor)
+            ws.cell(7, 1, 'Endereço de envio')
+            ws.cell(7, 2, sorteio.endereco_vencedor)
+            ws.cell(8, 1, 'CEP')
+            ws.cell(8, 2, sorteio.cep_vencedor)
+
+            ws.cell(2, 3, 'Quantidade')
+            ws.cell(2, 4, 'Código do produto')
+            ws.cell(2, 5, 'Descrição')
+            ws.cell(2, 6, 'CC')
+            ws.cell(2, 7, 'Data fechamento do cc')
+            ws.cell(2, 8, 'Responsável pelo cc')
+            data = sorteio.__dict__
+            premios = data['premios']
+            del data['premios']
+
+            for linha, premio in enumerate(premios):
+                ws.cell(linha + 3, 3, premio[0])
+                ws.cell(linha + 3, 4, premio[1])
+                ws.cell(linha + 3, 5, premio[2])
+                ws.cell(linha + 3, 6, premio[3])
+                ws.cell(linha + 3, 7, premio[4])
+                ws.cell(linha + 3, 8, premio[5])
+                atual = [dado for dado in data.values()] + [sorteio.nome_do_sorteio] + premio
+                dfs.append(pd.DataFrame([atual], columns=colunas))
+
+        wb.save('C:/Users/Edimar/Documents/GitHub/Validador_de_cadastros/data/data.xlsx')
+        self.__tb_vencedores = pd.concat(dfs, ignore_index=True, verify_integrity=True)
+        self.__arquivo.salva_arquivo_filtrado(self.__tb_vencedores, tipo='tabela_de_sorteados')
 

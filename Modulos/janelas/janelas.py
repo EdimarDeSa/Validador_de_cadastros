@@ -601,21 +601,16 @@ class JanelaRegistroDeVencedor(JanelaPadrao):
         Label(master, text='Telefone:', **self.configuracoes.label_parametros).place(relx=0.01, rely=0.705)
         Entry(master, name='entry_telefone', **conf_entrys).place(relx=0.2, rely=0.7, relwidth=0.75)
 
-        self.btn_salvar = Button(master, text='Salvar')
-        self.btn_salvar.place(relx=0.35, rely=0.85, relwidth=0.3)
+        self.btn_salvar = Button(master, text='Salvar', bootstyle=SUCCESS)
+        self.btn_salvar.place(relx=0.1, rely=0.85, relwidth=0.3)
+
+        Button(
+            master, text='Exportar relatório', bootstyle=(SUCCESS, OUTLINE),
+            command=lambda s=self.lista_de_sorteios :self.tabelas.exportar_tb_vencedores(s)
+        ).place(relx=0.6, rely=0.85, relwidth=0.3)
 
         master.children.get('entry_cpf').focus_set()
         master.children.get('entry_cpf').bind('<KeyRelease>', self.busca_participante)
-
-    def _registra_vencedor(self, nome_sorteio: str):
-        frame_sorteio = self.form_sorteios.children.get(f'frame_{nome_sorteio.lower()}')
-        nome_ganhador = self.form_vencedor.children.get('entry_nome').get()
-        cpf_ganhador = self.form_vencedor.children.get('entry_cpf').get()
-        '2988965838'
-        frame_sorteio.children.get(f'label_{nome_sorteio.lower()}').configure(text=f'{nome_sorteio} - {nome_ganhador}')
-        for sorteio in self.lista_de_sorteios:
-            if sorteio.nome_do_sorteio == nome_sorteio:
-                sorteio.registra_vencedor(nome_ganhador)
 
     def _atualiza_sorteios(self, _):
         self.deleta_form_sorteios()
@@ -628,7 +623,7 @@ class JanelaRegistroDeVencedor(JanelaPadrao):
             subframe.pack(fill=BOTH, expand=True, ipady=10)
             subframe.columnconfigure(0, weight=1)
 
-            titulo = nome_sorteio if not sorteio.vencedor else f'{nome_sorteio} - {sorteio.vencedor}'
+            titulo = nome_sorteio if not sorteio.nome_vencedor else f'{nome_sorteio} - {sorteio.nome_vencedor}'
             Label(
                 subframe, text=titulo, name=f'label_{nome_sorteio.lower()}', **self.configuracoes.label_titulos
             ).grid(row=0, columnspan=2)
@@ -675,6 +670,14 @@ class JanelaRegistroDeVencedor(JanelaPadrao):
         for child in self.form_sorteios.winfo_children():
             deleta_tela(child)
 
+    def _registra_vencedor(self, nome_sorteio: str):
+        frame_sorteio = self.form_sorteios.children.get(f'frame_{nome_sorteio.lower()}')
+        nome_ganhador = self._sorteado[0]
+        frame_sorteio.children.get(f'label_{nome_sorteio.lower()}').configure(text=f'{nome_sorteio} - {nome_ganhador}')
+        for sorteio in self.lista_de_sorteios:
+            if sorteio.nome_do_sorteio == nome_sorteio:
+                sorteio.registra_vencedor(self._sorteado)
+
     def busca_participante(self, e: tkinter.Event):
         def altera_texto(w_name, data):
             self.form_vencedor.children.get(w_name).configure(state=NORMAL)
@@ -690,9 +693,9 @@ class JanelaRegistroDeVencedor(JanelaPadrao):
         if participante.any():
             self.form_vencedor.children.get('frame_info').configure(text='')
             dados = participante[0]
-            print(dados)
             altera_texto('entry_nome', dados[0])
             altera_texto('entry_cep', dados[8])
             altera_texto('entry_endereco', dados[2])
             altera_texto('entry_email', dados[3])
             altera_texto('entry_telefone', dados[5])
+            self._sorteado = participante[0]
