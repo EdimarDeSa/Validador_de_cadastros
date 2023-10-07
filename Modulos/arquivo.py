@@ -60,3 +60,12 @@ class AbreArquivo:
                     return df
         showwarning('Nenhum codec encontrado', F'Não foi possível achar o campo "{CPF}" com nenhum codec disponível')
         return pd.DataFrame()
+
+    def get_save_path(self, titulo=None, nome_base_arquivo=None) -> [Path, None]:
+        titulo = titulo if titulo else 'Salvar como'
+        nome_base_arquivo = nome_base_arquivo if nome_base_arquivo else 'Arquivo.xlsx'
+        busca = asksaveasfilename(
+            confirmoverwrite=True, defaultextension='.xlsx', filetypes=(('Arquivos do Excel', '*.xlsx'),),
+            initialdir=DIRETORIO_BASE, initialfile=nome_base_arquivo, title=titulo
+        )
+        return Path(busca).resolve() if busca != '' else None

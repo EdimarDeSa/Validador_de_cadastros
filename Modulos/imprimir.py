@@ -73,8 +73,7 @@ class Impressao(Impressora):
             printer.text(f'''\n\n\n{linha1}\n{linha2}''', font_config=fonte_nome)
 
     def printers_job_checker(self) -> list[dict]:
-        jobs_list = list()
-        jobs = None
+        jobs_list = []
 
         if not self.__phandle_list:
             self.__inicia_phandle_list()

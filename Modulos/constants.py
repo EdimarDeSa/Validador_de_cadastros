@@ -63,3 +63,9 @@ LINHAS_TESTE = [
         str(11111111111 * i).zfill(11), f"Produto {i}", f"{i}", "12345", "12/01/2024", "Marta Rosa Nunes"
     ) for i in range(5)
 ]
+
+# Cores
+BRANCO = 'FFFFFF'
+PRETO = '000000'
+VERDE = '008000'
+AMARELO = 'FFFF00'

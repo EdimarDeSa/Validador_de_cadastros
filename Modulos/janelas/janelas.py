@@ -1,11 +1,10 @@
 import tkinter
 from pathlib import Path
 from threading import Thread
-from tkinter.messagebox import showinfo, askyesno
+from tkinter.messagebox import showinfo, askyesno, showerror
 
 from ttkbootstrap import *
 from ttkbootstrap.tableview import Tableview
-from ttkbootstrap.tooltip import ToolTip
 from ttkbootstrap.scrolled import ScrolledFrame
 from ttkbootstrap.style import Bootstyle
 
@@ -128,20 +127,21 @@ class JanelaSorteios(JanelaPadrao):
 
         frame_produtos = Frame(master)
         frame_produtos.place(relx=0.005, rely=0.01, relheight=0.49, relwidth=0.99)
-        self.inicia_frame_produtos(frame_produtos)
+        self.inicia_ui_produtos(frame_produtos)
 
         self.frame_de_sorteios = Frame(master)
         self.frame_de_sorteios.place(relx=0.005, rely=0.51, relheight=0.49, relwidth=0.99)
-        self.inicia_frame_sorteios(self.frame_de_sorteios)
+        self.inicia_ui_sorteios(self.frame_de_sorteios)
 
-        # teste
-        for _ in range(8):
-            for row in LINHAS_TESTE:
-                self.tabela_de_produtos.insert_row(values=list(row))
-            self.tabela_de_produtos.load_table_data()
-            self.salva_sorteio()
+        # Teste
+        if kwargs.get('teste', False):
+            for _ in range(8):
+                for row in LINHAS_TESTE:
+                    self.tabela_de_produtos.insert_row(values=list(row))
+                self.tabela_de_produtos.load_table_data()
+                self.salva_sorteio()
 
-    def inicia_frame_produtos(self, master: Frame):
+    def inicia_ui_produtos(self, master: Frame):
         self.tabela_de_produtos = Tableview(master, coldata=COLUNAS_DA_TELA_DE_SORTEIOS)
         self.tabela_de_produtos.place(relx=0, rely=0, relwidth=0.79, relheight=1)
 
@@ -155,13 +155,13 @@ class JanelaSorteios(JanelaPadrao):
 
         Button(
             master, text="Salvar sorteio", command=self.salva_sorteio, style=SUCCESS
-        ).place(relx=0.8, rely=0.5, relwidth=0.19)
+        ).place(relx=0.8, rely=0.55, relwidth=0.19)
 
         Button(
             master, text="Remover prêmio", command=self.remove_produto, style=DANGER
         ).place(relx=0.8, rely=0.8, relwidth=0.19)
 
-    def inicia_frame_sorteios(self, master):
+    def inicia_ui_sorteios(self, master):
         self.tela_retratil_sorteios = CollapsingFrame(master)
         self.tela_retratil_sorteios.place(relx=0, rely=0, relwidth=0.79, relheight=1)
 
@@ -176,8 +176,8 @@ class JanelaSorteios(JanelaPadrao):
         ).place(relx=0.8, rely=0.5, relwidth=0.19)
 
     def abre_formulario_de_produto(
-            self, codigo='', nome_do_produto='', quantidade='1', centro_de_custos='23504',
-            data_de_fechamento_cc='12/01/2024', responsavel_pelo_cc='Marta Rosa Nunes', iid=None
+            self, codigo='', nome_do_produto='', quantidade='1', centro_de_custos='',
+            data_de_fechamento_cc='', responsavel_pelo_cc='Marta Rosa Nunes', iid=None
     ):
         if self.var_formulario_de_produto_aberto:
             self.fechar_formulario_de_produto()
@@ -188,67 +188,71 @@ class JanelaSorteios(JanelaPadrao):
 
         self.var_formulario_de_produto_aberto = True
         self.top = Toplevel(
-            title="Cadastro de produto", size=(800, 260), resizable=(False, False),
-            position=(self.master.winfo_rootx(), self.master.winfo_rooty())
+            title="Cadastro de produto", size=(800, 260), resizable=(False, False), transient=self.master
         )
+        self.top.position_center()
 
         self.top.protocol("WM_DELETE_WINDOW", self.fechar_formulario_de_produto)
-        self.top.bind('<FocusIn>', self.verifica_info)
-        self.top.bind('<Key>', self.verifica_info)
 
         # ------- PRIMEIRA LINHA ------- #
 
         Label(self.top, text="Código", **self.configuracoes.label_parametros).place(x=10, y=10)
-        self.campo_codigo = Entry(self.top, validatecommand=(self.reg_verifica_digito_numerico, '%P'), validate='key',
-                                  **self.configuracoes.entry_parametros)
-        self.campo_codigo.place(x=10, y=40, width=200)
-        self.campo_codigo.insert(0, codigo)
-        ToolTip(self.campo_codigo, text='Para procurar o produto aperte o "ENTER"')
+        Entry(
+            self.top, name='campo_codigo', validatecommand=(self.reg_verifica_digito_numerico, '%P'), validate='key',
+            **self.configuracoes.entry_parametros
+        ).place(x=10, y=40, width=200)
+        self.top.children.get('campo_codigo').insert(0, codigo)
+        self.top.children.get('campo_codigo').focus_set()
+        self.top.children.get('campo_codigo').bind('<KeyRelease>', self.busca_produto)
 
         Label(self.top, text="Produto", **self.configuracoes.label_parametros).place(x=220, y=10)
 
-        self.campo_nome_do_produto = Entry(self.top, **self.configuracoes.entry_parametros)
-        self.campo_nome_do_produto.place(x=220, y=40, width=410)
-        self.campo_nome_do_produto.insert(0, nome_do_produto)
+        Entry(self.top, name='campo_nome_do_produto', **self.configuracoes.entry_parametros)
+        self.top.children.get('campo_nome_do_produto').place(x=220, y=40, width=410)
+        self.top.children.get('campo_nome_do_produto').insert(0, nome_do_produto)
+        self.top.children.get('campo_nome_do_produto').bind('<Key>', self.verifica_info)
 
         Label(self.top, text="Quantidade", **self.configuracoes.label_parametros).place(x=640, y=10)
-        self.campo_quantidade = Entry(self.top, validatecommand=(self.reg_verifica_digito_numerico, '%P'), validate='key',
-                                      **self.configuracoes.entry_parametros)
-        self.campo_quantidade.place(x=640, y=40, width=150)
-        self.campo_quantidade.insert(0, quantidade)
+        Entry(self.top, name='campo_quantidade', validatecommand=(self.reg_verifica_digito_numerico, '%P'),
+              validate='key',**self.configuracoes.entry_parametros)
+        self.top.children.get('campo_quantidade').place(x=640, y=40, width=150)
+        self.top.children.get('campo_quantidade').insert(0, quantidade)
+        self.top.children.get('campo_quantidade').bind('<Key>', self.verifica_info)
 
         # ------- SEGUNDA LINHA ------- #
 
         Label(self.top, text="Centro de Custos", **self.configuracoes.label_parametros).place(x=10, y=110)
-        self.campo_centro_de_custos = Entry(self.top, validatecommand=(self.reg_verifica_digito_numerico, '%P'),
-                                            validate='key', **self.configuracoes.entry_parametros)
-        self.campo_centro_de_custos.place(x=10, y=140, width=200)
-        self.campo_centro_de_custos.insert(0, centro_de_custos)
+        Entry(self.top, name='campo_centro_de_custos', validatecommand=(self.reg_verifica_digito_numerico, '%P'),
+              validate='key', **self.configuracoes.entry_parametros)
+        self.top.children.get('campo_centro_de_custos').place(x=10, y=140, width=200)
+        self.top.children.get('campo_centro_de_custos').insert(0, centro_de_custos)
+        self.top.children.get('campo_centro_de_custos').bind('<Key>', self.verifica_info)
 
         Label(self.top, text="Data de fechamento CC", **self.configuracoes.label_parametros).place(x=220, y=110)
-        data_inicial = datetime.strptime(data_de_fechamento_cc, '%d/%m/%Y')
-        self.campo_data_de_fechamento_cc = DateEntry(self.top, startdate=data_inicial)
-        self.campo_data_de_fechamento_cc.place(x=220, y=140)
+        data_inicial = datetime.strptime(data_de_fechamento_cc, '%d/%m/%Y') if data_de_fechamento_cc else None
+        DateEntry(self.top, name='campo_data_de_fechamento_cc', startdate=data_inicial)
+        self.top.children.get('campo_data_de_fechamento_cc').place(x=220, y=140)
+        self.top.children.get('campo_data_de_fechamento_cc').bind('<Key>', self.verifica_info)
 
         Label(self.top, text="Responsável pelo CC", **self.configuracoes.label_parametros).place(x=430, y=110)
-        self.campo_responsavel_pelo_cc = Entry(self.top, **self.configuracoes.entry_parametros)
-        self.campo_responsavel_pelo_cc.place(x=440, y=140, width=350)
-        self.campo_responsavel_pelo_cc.insert(0, responsavel_pelo_cc)
+        Entry(self.top, name='campo_responsavel_pelo_cc', **self.configuracoes.entry_parametros)
+        self.top.children.get('campo_responsavel_pelo_cc').place(x=440, y=140, width=350)
+        self.top.children.get('campo_responsavel_pelo_cc').insert(0, responsavel_pelo_cc)
+        self.top.children.get('campo_responsavel_pelo_cc').bind('<Key>', self.verifica_info)
 
         # ------- TERCEIRA LINHA ------- #
-        Button(
-            self.top, text="Adicionar", command=lambda _id=iid: self.salva_produto(_id)
-        ).place(x=170, y=210, width=160)
+        Button(self.top, text="Adicionar", command=lambda _id=iid: self.salva_produto(_id)
+               ).place(x=170, y=210, width=160)
 
         Button(self.top, text="Limpar", command=self.limpa_formulario_de_produto).place(x=500, y=210, width=160)
 
     def limpa_formulario_de_produto(self):
-        self.campo_codigo.delete(0, END)
-        self.campo_nome_do_produto.delete(0, END)
-        self.campo_quantidade.delete(0, END)
-        self.campo_centro_de_custos.delete(0, END)
-        self.campo_data_de_fechamento_cc.entry.delete(0, END)
-        self.campo_responsavel_pelo_cc.delete(0, END)
+        self.top.children.get('campo_codigo').delete(0, END)
+        self.top.children.get('campo_nome_do_produto').delete(0, END)
+        self.top.children.get('campo_quantidade').delete(0, END)
+        self.top.children.get('campo_centro_de_custos').delete(0, END)
+        self.top.children.get('campo_data_de_fechamento_cc').entry.delete(0, END)
+        self.top.children.get('campo_responsavel_pelo_cc').delete(0, END)
 
     def fechar_formulario_de_produto(self):
         self.var_formulario_de_produto_aberto = False
@@ -275,36 +279,36 @@ class JanelaSorteios(JanelaPadrao):
         self.var_sorteio_em_edicao = True
         self.tabela_de_produtos.load_table_data()
 
-    def salva_produto(self, iid=None):
-        codigo = self.campo_codigo.get()
+    def salva_produto(self, iid=None, event: tkinter.Event = None):
+        codigo = self.top.children.get('campo_codigo').get()
         if not codigo:
             self.informa_falta_de_dado('Código')
-            self.campo_codigo.focus_set()
+            self.top.children.get('campo_codigo').focus_set()
             return
 
-        nome_do_produto = self.campo_nome_do_produto.get()
+        nome_do_produto = self.top.children.get('campo_nome_do_produto').get()
         if not nome_do_produto:
             self.informa_falta_de_dado('Nome do produto')
-            self.campo_nome_do_produto.focus_set()
+            self.top.children.get('campo_nome_do_produto').focus_set()
             return
 
-        quantidade = self.campo_quantidade.get()
+        quantidade = self.top.children.get('campo_quantidade').get()
         if not quantidade:
             self.informa_falta_de_dado('Quantidade')
-            self.campo_quantidade.focus_set()
+            self.top.children.get('campo_quantidade').focus_set()
             return
 
-        cc = self.campo_centro_de_custos.get()
+        cc = self.top.children.get('campo_centro_de_custos').get()
         if not cc:
             self.informa_falta_de_dado('Centro de Custo')
-            self.campo_centro_de_custos.focus_set()
+            self.top.children.get('campo_centro_de_custos').focus_set()
             return
 
-        data_fechamento_cc = self.campo_data_de_fechamento_cc.entry.get()
-        responsavel_cc = self.campo_responsavel_pelo_cc.get()
+        data_fechamento_cc = self.top.children.get('campo_data_de_fechamento_cc').entry.get()
+        responsavel_cc = self.top.children.get('campo_responsavel_pelo_cc').get()
         if not responsavel_cc:
             self.informa_falta_de_dado('Responsável pelo cc')
-            self.campo_responsavel_pelo_cc.focus_set()
+            self.top.children.get('campo_responsavel_pelo_cc').focus_set()
             return
 
         valores = [codigo, nome_do_produto, quantidade, cc, data_fechamento_cc, responsavel_cc]
@@ -317,8 +321,11 @@ class JanelaSorteios(JanelaPadrao):
         self.tabela_de_produtos.load_table_data()
 
     def editar_produto(self):
-        kw = dict(iid=self.get_iids_selecionados[0])
-        self.abre_formulario_de_produto(*self.tabela_de_produtos.get_row(**kw).values, **kw)
+        iids = self.get_iids_selecionados
+        if not iids: return
+
+        kwargs = dict(iid=iids[0])
+        self.abre_formulario_de_produto(*self.tabela_de_produtos.get_row(**kwargs).values, **kwargs)
 
     def remove_produto(self):
         self.tabela_de_produtos.delete_rows(iids=self.get_iids_selecionados)
@@ -358,12 +365,23 @@ class JanelaSorteios(JanelaPadrao):
     @staticmethod
     def verifica_info(event: tkinter.Event):
         widget: Entry = event.widget
-        if isinstance(widget, Entry):
-            info = widget.get()
-            if not info:
-                widget.config(bootstyle=DANGER)
-            else:
-                widget.config(bootstyle=DEFAULT)
+        if not widget.get():
+            widget.config(bootstyle=DANGER)
+        else:
+            widget.config(bootstyle=DEFAULT)
+
+    def busca_produto(self, event: tkinter.Event):
+        codigo = event.widget.get()
+        if len(codigo) < 7:
+            return
+
+        produto = self.tabelas.busca_produto(codigo)
+
+        if produto is None:
+            showerror('Planilha de produtos invalida', 'Planilha de produtos no formato inválido')
+
+        self.top.children.get('campo_nome_do_produto').delete(0, END)
+        self.top.children.get('campo_nome_do_produto').insert(0, '' if produto is 0 else produto.iloc[0])
 
     @property
     def checa_nome_do_sorteio(self):
@@ -384,9 +402,7 @@ class JanelaImpressao(JanelaPadrao):
     linha_6 = linha_5 + pula_linha
 
     def __init__(self, master: Frame, configuracoes, tabelas, impressao, **kwargs):
-        self.root = master
-
-        super().__init__(self.root, configuracoes, tabelas, impressao)
+        super().__init__(master, configuracoes, tabelas, impressao)
 
         self.var_total_de_cadastros = StringVar(value="Total de cadastros: -")
         self.var_inscricoes_validas = StringVar(value="Participantes válidos: -")
@@ -397,76 +413,60 @@ class JanelaImpressao(JanelaPadrao):
         self.var_caminho_colaboradores = StringVar(value="Arquivo colaboradores")
         self.var_cpf_sorteado = StringVar()
 
-        self.inicia_form_impressao()
+        self.inicia_ui_impressao(master)
 
-        # teste
-        self.data.entry.delete(0, END)
-        self.data.entry.insert(0, '28/09/2023')
-        self.abre_tb_inscritos(Path('C:/Users/Edimar/Documents/GitHub/Validador_de_cadastros/data/9-28-2023-Evento_de_lancamentos-_Abril.csv').resolve())
-        self.abre_tb_colaboradores(Path('C:/Users/Edimar/Documents/GitHub/Validador_de_cadastros/data/Colaboradores.csv').resolve())
-        self.escreve_resultado_de_verificacao()
+        # Teste
+        if kwargs.get('teste', False):
+            date_entry: DateEntry = master.children.get('calendario')
+            date_entry.entry.delete(0, END)
+            date_entry.entry.insert(0, '28/09/2023')
+            self.abre_tb_inscritos(Path('./data/9-28-2023-Evento_de_lancamentos-_Abril.csv').resolve())
+            self.abre_tb_colaboradores(Path('./data/Colaboradores.csv').resolve())
+            self.escreve_resultado_de_verificacao()
 
-    def inicia_form_impressao(self):
-        frame_impressao = Frame(self.root)
-        frame_impressao.pack(fill=BOTH, expand=True)
-        frame_impressao.columnconfigure(0, minsize=250)
-        frame_impressao.columnconfigure(1, minsize=250)
-        frame_impressao.columnconfigure(2, minsize=250)
-        frame_impressao.columnconfigure(3, minsize=50)
+    def inicia_ui_impressao(self, master: Frame):
+        for i in range(4):
+            master.columnconfigure(i, minsize=250)
+        master.columnconfigure(3, minsize=50)
 
-        self.inicia_form_impressao_linha1(frame_impressao, self.linha_1)
-        self.inicia_form_impressao_linha2(frame_impressao, self.linha_2)
-        self.inicia_form_impressao_linha3(frame_impressao, self.linha_3)
-        self.inicia_form_impressao_linha4(frame_impressao, self.linha_4)
-        self.inicia_form_impressao_linha5(frame_impressao, self.linha_5)
-        self.inicia_form_impressao_linha6(frame_impressao)
+        # ------------ Linha 1 ------------ #
+        self.inicia_widget_impressora(master, 0.01, self.linha_1, 1)
+        self.inicia_widget_impressora(master, 0.31, self.linha_1, 2)
 
-    def inicia_form_impressao_linha1(self, master: Frame, linha):
-        self.inicia_widget_impressora(master, 0.01, linha, 1)
-        self.inicia_widget_impressora(master, 0.31, linha, 2)
+        Label(master, text='Data do evento:', **self.configuracoes.label_parametros).place(relx=0.61, rely=self.linha_1)
+        DateEntry(master, name='calendario').place(relx=0.73, rely=self.linha_1 - 0.01)
 
-        Label(master, text='Data do evento:', **self.configuracoes.label_parametros).place(relx=0.61, rely=linha)
+        # ------------ Linha 2 ------------ #
+        self.inicia_widgets_de_variaveis(master, self.var_total_de_cadastros, 0.01, self.linha_2)
+        self.inicia_widgets_de_variaveis(master, self.var_inscricoes_validas, 0.51, self.linha_2)
 
-        self.data = DateEntry(master)
-        self.data.place(relx=0.73, rely=linha - 0.01)
+        # ------------ Linha 3 ------------ #
+        self.inicia_widgets_de_variaveis(master, self.var_cadastros_repetidos, 0.01, self.linha_3)
+        self.inicia_widgets_de_variaveis(master, self.var_cpfs_invalidos, 0.34, self.linha_3)
+        self.inicia_widgets_de_variaveis(master, self.var_colaboradores_cadastrados, 0.67, self.linha_3)
 
-    def inicia_form_impressao_linha2(self, master: Frame, linha):
-        Label(master, textvariable=self.var_total_de_cadastros, **self.configuracoes.label_parametros).place(
-            relx=0.01, rely=linha)
+        # ------------ Linha 4 ------------ #
+        self.inicia_widget_localizazao_de_arquivo(master, self.var_caminho_inscritos, self.linha_4,
+                                                  self.abre_tb_inscritos)
 
-        Label(master, textvariable=self.var_inscricoes_validas, **self.configuracoes.label_parametros).place(
-            relx=0.51, rely=linha)
-
-    def inicia_form_impressao_linha3(self, master: Frame, linha):
-        Label(master, textvariable=self.var_cadastros_repetidos, **self.configuracoes.label_parametros).place(
-            relx=0.01, rely=linha)
-
-        Label(master, textvariable=self.var_cpfs_invalidos, **self.configuracoes.label_parametros).place(relx=0.34,
-                                                                                                         rely=linha)
-
-        Label(master, textvariable=self.var_colaboradores_cadastrados, **self.configuracoes.label_parametros).place(
-            relx=0.67, rely=linha)
-
-    def inicia_form_impressao_linha4(self, master: Frame, linha):
-        self.inicia_widget_localizazao_de_arquivo(master, self.var_caminho_inscritos, linha, self.abre_tb_inscritos)
-
-    def inicia_form_impressao_linha5(self, master: Frame, linha):
-        self.inicia_widget_localizazao_de_arquivo(master, self.var_caminho_colaboradores, linha,
+        # ------------ Linha 5 ------------ #
+        self.inicia_widget_localizazao_de_arquivo(master, self.var_caminho_colaboradores, self.linha_5,
                                                   self.abre_tb_colaboradores)
 
-    def inicia_form_impressao_linha6(self, master: Frame):
-        self.bt_inicia_verificacao = Button(master, command=self.escreve_resultado_de_verificacao,
-                                            text="Verifica cadastros")
+        # ------------ Linha 6 ------------ #
+        Button(master, name='bt_inicia_verificacao', text="Verifica cadastros",
+               command=self.escreve_resultado_de_verificacao)
+        Button(master, name='bt_inicia_impressao', text="Iniciar impressão",
+               command=self.inicia_thread_impressao)
 
-        self.bt_inicia_impressao = Button(master, command=self.inicia_thread_impressao, text="Iniciar impressão")
+    def inicia_widgets_de_variaveis(self, master, var_text, relx, rely):
+        Label(master, textvariable=var_text, **self.configuracoes.label_parametros).place(relx=relx, rely=rely)
 
-    def inicia_widget_impressora(self, master: Frame, coluna: float, linha: float, numero: int):
-        Label(master, text=f'Impressora {numero}:', **self.configuracoes.label_parametros).place(relx=coluna,
-                                                                                                 rely=linha)
+    def inicia_widget_impressora(self, master: Frame, relx: float, rely: float, numero: int):
+        Label(master, text=f'Impressora {numero}:', **self.configuracoes.label_parametros).place(relx=relx, rely=rely)
 
-        nome_widget = f'impressora{numero}'
-        impressora = Combobox(master, name=nome_widget, values=self.impressao.listar_impressoras())
-        impressora.place(relx=coluna + 0.1, rely=linha - 0.015)
+        impressora = Combobox(master, values=self.impressao.listar_impressoras())
+        impressora.place(relx=relx + 0.1, rely=rely - 0.015)
         impressora.bind('<<ComboboxSelected>>', self.ao_selecionra_impressora)
         impressora.bind('<<Enter>>', self.ao_selecionra_impressora)
 
@@ -492,11 +492,11 @@ class JanelaImpressao(JanelaPadrao):
 
         self.var_inscricoes_validas.set(f"Participantes válidos: {self.tabelas.get_total_inscricoes_validas}")
 
-        self.master.after(500, lambda: self.bt_inicia_impressao.place(relx=0.26, rely=self.linha_6))
+        self.master.after(500, lambda: self.master.children.get('bt_inicia_impressao').place(relx=0.26, rely=self.linha_6))
 
     def abre_tb_inscritos(self, caminho=None):
 
-        self.tabelas.inicia_tb_inscritos(self.data.entry.get(), caminho)
+        self.tabelas.inicia_tb_inscritos(self.master.children.get('calendario').entry.get(), caminho)
 
         caminho: Path = self.tabelas.get_caminho_tb_inscritos
         if not caminho:
@@ -505,8 +505,8 @@ class JanelaImpressao(JanelaPadrao):
         self.var_caminho_inscritos.set(self.ajusta_caminho(caminho))
         self.var_total_de_cadastros.set(f"Total de cadastros: {self.tabelas.get_total_inscritos}")
 
-        self.bt_inicia_impressao.place_forget()
-        self.bt_inicia_verificacao.place(relx=0.01, rely=self.linha_6)
+        self.master.children.get('bt_inicia_impressao').place_forget()
+        self.master.children.get('bt_inicia_verificacao').place(relx=0.01, rely=self.linha_6)
 
     def abre_tb_colaboradores(self, caminho=None):
         self.tabelas.inicia_tb_colaboradores(caminho)
@@ -522,32 +522,20 @@ class JanelaImpressao(JanelaPadrao):
             return showinfo("Impressora", "Selecione uma impressora.")
 
         Thread(target=self.inicia_impressao, daemon=True).start()
-        self.bt_inicia_impressao.place_forget()
-        self.bt_inicia_verificacao.place_forget()
+        self.master.children.get('bt_inicia_impressao').place_forget()
+        self.master.children.get('bt_inicia_verificacao').place_forget()
 
     def inicia_impressao(self):
-        if not self.impressao.get_lista_de_impresoras_em_uso():
-            showinfo('Falha de impressora', 'Selecione ao menos uma impressora!')
-            return
-
-        self.log_panel = LogPanel(self.impressao, self.tabelas, self.configuracoes.label_parametros)
-        self.log_panel.start_monitoramento()
+        log_panel = LogPanel(self.impressao, self.tabelas, **self.configuracoes.label_parametros)
+        log_panel.start_monitoramento()
 
         self.impressao.enviar_tabela_para_impressora(self.tabelas.get_tb_inscricoes_validas)
-
-        self.bt_inicia_verificacao.place(relx=0.01, rely=self.linha_6)
-        self.bt_inicia_impressao.place_forget()
-
-    def salva_vencedores(self):
-        self.tabelas.salva_vencedores()
-
-        showinfo("Vencedores salvos", "A lista de vencedores foi salva com sucesso.")
 
     @staticmethod
     def ajusta_caminho(caminho: Path) -> str:
         caminho_ajustado = str(caminho)
-        # if len(caminho_ajustado) > 100:
-        #     caminho_ajustado = "..." + caminho_ajustado[-99:]
+        if len(caminho_ajustado) > 100:
+            caminho_ajustado = "..." + caminho_ajustado[-99:]
 
         return caminho_ajustado
 
@@ -567,6 +555,10 @@ class JanelaRegistroDeVencedor(JanelaPadrao):
         self.form_sorteios.place(relx=0.52, rely=0, relwidth=0.48, relheight=1)
 
         master.bind('<Expose>', self._atualiza_sorteios)
+
+        # Teste
+        if kwargs.get('teste', False):
+            pass
 
     def _configura_formulario_de_vencedor(self, master: Frame):
         Label(
@@ -606,7 +598,7 @@ class JanelaRegistroDeVencedor(JanelaPadrao):
 
         Button(
             master, text='Exportar relatório', bootstyle=(SUCCESS, OUTLINE),
-            command=lambda s=self.lista_de_sorteios :self.tabelas.exportar_tb_vencedores(s)
+            command=lambda s=self.lista_de_sorteios :self.tabelas.exportar_relatorio_vencedores(s)
         ).place(relx=0.6, rely=0.85, relwidth=0.3)
 
         master.children.get('entry_cpf').focus_set()
@@ -635,10 +627,14 @@ class JanelaRegistroDeVencedor(JanelaPadrao):
 
             bt_row = (len(sorteio.premios) + 1) // 2
             Button(
-                subframe, text=f'Abir {nome_sorteio}', command=lambda s=nome_sorteio: self._selecionar_sorteado(s)
+                subframe, text=f'Abrir {nome_sorteio}', command=lambda s=nome_sorteio: self._selecionar_sorteado(s)
             ).grid(row=bt_row, column=1, padx=(0, 20))
 
             Separator(self.form_sorteios, orient=HORIZONTAL).pack(fill=X, expand=True, ipady=3, anchor=CENTER)
+
+    def reseta_widgets(self):
+        for child in self.form_sorteios.winfo_children():
+            self._reset_widgets(child)
 
     def _reset_widgets(self, widget):
         widget.configure(bootstyle=DEFAULT)
@@ -650,8 +646,7 @@ class JanelaRegistroDeVencedor(JanelaPadrao):
         widget.configure(bootstyle=INFO)
 
     def _selecionar_sorteado(self, nome_sorteio):
-        for child in self.form_sorteios.winfo_children():
-            self._reset_widgets(child)
+        self.reseta_widgets()
 
         sorteio_widgets = self.form_sorteios.children.get(f'frame_{nome_sorteio.lower()}')
         if sorteio_widgets:
@@ -666,7 +661,6 @@ class JanelaRegistroDeVencedor(JanelaPadrao):
                 deleta_tela(sub_c)
             c.destroy()
 
-
         for child in self.form_sorteios.winfo_children():
             deleta_tela(child)
 
@@ -678,13 +672,11 @@ class JanelaRegistroDeVencedor(JanelaPadrao):
             if sorteio.nome_do_sorteio == nome_sorteio:
                 sorteio.registra_vencedor(self._sorteado)
 
-    def busca_participante(self, e: tkinter.Event):
-        def altera_texto(w_name, data):
-            self.form_vencedor.children.get(w_name).configure(state=NORMAL)
-            self.form_vencedor.children.get(w_name).delete(0, END)
-            self.form_vencedor.children.get(w_name).insert(0, data)
-            self.form_vencedor.children.get(w_name).configure(state=READONLY)
+        self._limpa_formulario_de_vencedor()
+        self.btn_salvar.configure(command='')
+        self.reseta_widgets()
 
+    def busca_participante(self, e: tkinter.Event):
         cpf = e.widget.get()
         if len(cpf) < 11:
             return
@@ -693,9 +685,23 @@ class JanelaRegistroDeVencedor(JanelaPadrao):
         if participante.any():
             self.form_vencedor.children.get('frame_info').configure(text='')
             dados = participante[0]
-            altera_texto('entry_nome', dados[0])
-            altera_texto('entry_cep', dados[8])
-            altera_texto('entry_endereco', dados[2])
-            altera_texto('entry_email', dados[3])
-            altera_texto('entry_telefone', dados[5])
+            self._altera_texto('entry_nome', dados[0])
+            self._altera_texto('entry_cep', dados[8])
+            self._altera_texto('entry_endereco', dados[2])
+            self._altera_texto('entry_email', dados[3])
+            self._altera_texto('entry_telefone', dados[5])
             self._sorteado = participante[0]
+
+    def _altera_texto(self, w_name, data):
+        self.form_vencedor.children.get(w_name).configure(state=NORMAL)
+        self.form_vencedor.children.get(w_name).delete(0, END)
+        self.form_vencedor.children.get(w_name).insert(0, data)
+        self.form_vencedor.children.get(w_name).configure(state=READONLY)
+
+    def _limpa_formulario_de_vencedor(self):
+        self.form_vencedor.children.get('entry_cpf').delete(0, END)
+        self._altera_texto('entry_nome', '')
+        self._altera_texto('entry_cep', '')
+        self._altera_texto('entry_endereco', '')
+        self._altera_texto('entry_email', '')
+        self._altera_texto('entry_telefone', '')

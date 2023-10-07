@@ -40,19 +40,24 @@ class Main(Window):
         tab_registro_de_campanha = Frame(self.notebook, name='tab_registro_de_campanha')
         self.notebook.add(tab_registro_de_campanha, text='Registro de sorteios')
         JanelaSorteios(tab_registro_de_campanha, self.configuracoes, self.tabelas,
-                       list_sort=self._lista_de_sorteios)
+                       list_sort=self._lista_de_sorteios, teste=True)
 
         tab_impressao = Frame(self.notebook, name='tab_impressao')
         self.notebook.add(tab_impressao, text='Validação e impressão')
-        JanelaImpressao(tab_impressao, self.configuracoes, self.tabelas, self.impressao)
+        JanelaImpressao(tab_impressao, self.configuracoes, self.tabelas, self.impressao, teste=True)
 
         tab_registro_de_vencedor = Frame(self.notebook, name='tab_registro_de_vencedor')
         self.notebook.add(tab_registro_de_vencedor, text='Registro de vencedor')
         JanelaRegistroDeVencedor(tab_registro_de_vencedor, self.configuracoes, self.tabelas,
-                                 list_sort=self._lista_de_sorteios)
+                                 list_sort=self._lista_de_sorteios, teste=True)
 
-        # frame_graficos = Frame(master=self.notebook, **self.configuracoes.py.frame_parametros, name='frame_graficos')
-        # self.notebook.add(frame_graficos, state='hidden', text='Graficos')
+        # tab_relatorios = Frame(self.notebook, name='tab_relatorios')
+        # self.notebook.add(tab_relatorios, text='Relatórios do sorteio')
+        # JanelaRelatorios(tab_relatorios, self.configuracoes, self.tabelas, teste=True)
+
+        # tab_wide_chat = Frame(self.notebook, name='tab_wide_chat')
+        # self.notebook.add(tab_wide_chat, text='Wide Chat')
+        # JanelaWideChat(tab_wide_chat, self.configuracoes, self.tabelas, teste=True)
 
     def inicia_variaveis_globais(self):
         self._lista_de_sorteios = []

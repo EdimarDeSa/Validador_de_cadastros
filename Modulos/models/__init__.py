@@ -1,34 +1,41 @@
+import time
 from typing import Literal
+from threading import Thread
 
 import validate_docbr as vdb
 import pandas as pd
-import openpyxl as excel
+from openpyxl import Workbook, worksheet, load_workbook
+from openpyxl.styles import Font, Side, Border, Alignment, NamedStyle, PatternFill
 
-from ..arquivo import AbreArquivo
-from ..funcoes_sanitizacao import sanitiza_cpf, sanitiza_nome
-# from ..busca_cep import Cep
-from ..imprimir import Impressao
+from Modulos.arquivo import AbreArquivo
+from Modulos.funcoes_sanitizacao import sanitiza_cpf, sanitiza_nome
+from Modulos.busca_cep import BuscaEndereco
+from Modulos.imprimir import Impressao
 from Modulos.models.sorteio import Sorteio, Produto
 from Modulos.constants import *
+from Modulos.data_hora_br import DatasBr
 
 
 class Tabelas:
     def __init__(self, impressao: Impressao) -> None:
+        self.__limpando = False
         self.__arquivo = AbreArquivo()
         self.__impressao = impressao
         self.__docbr = vdb.CPF()
+
+        self.__tb_produtos: pd.DataFrame = None
 
         self.__tb_sorteios: pd.DataFrame = None
         self.__tb_vencedores: pd.DataFrame = None
 
         self.__caminho_tb_inscritos: pd.DataFrame = None
-        self.__tb_inscritos = None
-        self.__tb_inscricoes_validas = None
+        self.__tb_inscritos: pd.DataFrame = None
+        self.__tb_inscricoes_validas: pd.DataFrame = None
 
         self.__caminho_tb_colaboradores: pd.DataFrame = None
-        self.__tb_colaboradores = None
+        self.__tb_colaboradores: pd.DataFrame = None
 
-        self.__total_cadastros_repetidos: pd.DataFrame = None
+        self.__total_cadastros_repetidos = None
         self.__total_cpfs_invalidos = None
         self.__total_colaboradores_cadastrados = None
 
@@ -114,13 +121,19 @@ class Tabelas:
         self.__total_colaboradores_cadastrados = (self.__tb_inscritos[COLABORADOR] == True).sum()
         self.__tb_inscricoes_validas = self.__tb_inscritos.query(f'{VALIDADE_CPF}==True and {COLABORADOR}==False')
 
-        # Thread(target=self.__busca_enderecos).start()
+        # Thread(target=self.__busca_enderecos, daemon=True).start()
 
-    # def __busca_enderecos(self):
-    #     informacoes_cep = self.__tb_inscricoes_validas.CEP.apply(lambda cep: Cep(cep).series)
-    #     self.__tb_inscricoes_validas = self.__tb_inscricoes_validas.merge(informacoes_cep, right_index=True,
-    #                                                                       left_index=True)
-    #     self.busca = True
+    def __busca_enderecos(self):
+        self.busca = True
+        infos_ceps = []
+        for cep in self.__tb_inscricoes_validas.CEP:
+            infos = BuscaEndereco(cep).__dict__
+            infos_ceps.append(infos)
+            time.sleep(2)
+        df_ceps = pd.DataFrame(infos_ceps, dtype='string')
+        self.__tb_inscricoes_validas = self.__tb_inscricoes_validas.merge(df_ceps, right_index=True, left_index=True)
+
+        self.busca = False
 
     @property
     def get_total_cadastros_repetidos(self) -> int:
@@ -181,50 +194,108 @@ class Tabelas:
             sorteios.setdefault(chave, []).append(Produto(*infos))
         return sorteios
 
-    def exportar_tb_vencedores(self, lista_de_sorteios: list[Sorteio]):
-        dfs = []
-        colunas = COLUNAS_DA_TABELA_DE_PARTICIPANTES + ['sorteio'] + COLUNAS_DA_TABELA_DE_PREMIOS
-        wb = excel.Workbook()
+    def exportar_relatorio_vencedores(self, lista_de_sorteios: list[Sorteio]):
+        wb = Workbook()
         wb.remove(wb.active)
 
+        header_style = self.create_header_style()
+        name_style = self.create_name_style()
         for sorteio in lista_de_sorteios:
             ws = wb.create_sheet(sorteio.nome_do_sorteio)
-            ws.cell(1, 1, sorteio.nome_do_sorteio)
-            ws.cell(2, 1, sorteio.nome_vencedor)
-            ws.cell(3, 1, 'CPF')
-            ws.cell(3, 2, sorteio.cpf_vencedor)
-            ws.cell(4, 1, 'RG')
-            ws.cell(4, 2, sorteio.rg_vencedor)
-            ws.cell(5, 1, 'Telefone')
-            ws.cell(5, 2, sorteio.telefone_vencedor)
-            ws.cell(6, 1, 'Email')
-            ws.cell(6, 2, sorteio.email_vencedor)
-            ws.cell(7, 1, 'Endereço de envio')
-            ws.cell(7, 2, sorteio.endereco_vencedor)
-            ws.cell(8, 1, 'CEP')
-            ws.cell(8, 2, sorteio.cep_vencedor)
+            self.set_column_widths(ws)
+            self.set_header_cells(ws, sorteio, header_style, name_style)
+            self.set_premio_cells(ws, sorteio)
 
-            ws.cell(2, 3, 'Quantidade')
-            ws.cell(2, 4, 'Código do produto')
-            ws.cell(2, 5, 'Descrição')
-            ws.cell(2, 6, 'CC')
-            ws.cell(2, 7, 'Data fechamento do cc')
-            ws.cell(2, 8, 'Responsável pelo cc')
-            data = sorteio.__dict__
-            premios = data['premios']
-            del data['premios']
+        data_crua = lista_de_sorteios[0].data_cadastro_vencedor
+        data = DatasBr(data_e_hora=data_crua)
 
-            for linha, premio in enumerate(premios):
-                ws.cell(linha + 3, 3, premio[0])
-                ws.cell(linha + 3, 4, premio[1])
-                ws.cell(linha + 3, 5, premio[2])
-                ws.cell(linha + 3, 6, premio[3])
-                ws.cell(linha + 3, 7, premio[4])
-                ws.cell(linha + 3, 8, premio[5])
-                atual = [dado for dado in data.values()] + [sorteio.nome_do_sorteio] + premio
-                dfs.append(pd.DataFrame([atual], columns=colunas))
+        save_path = self.__arquivo.get_save_path(nome_base_arquivo=f'Planilha de envio {data.nome_do_mes} {data.ano}')
+        if save_path is None:
+            return
+        wb.save(save_path)
 
-        wb.save('C:/Users/Edimar/Documents/GitHub/Validador_de_cadastros/data/data.xlsx')
-        self.__tb_vencedores = pd.concat(dfs, ignore_index=True, verify_integrity=True)
-        self.__arquivo.salva_arquivo_filtrado(self.__tb_vencedores, tipo='tabela_de_sorteados')
+    def create_header_style(self):
+        header_style = NamedStyle('Header')
+        header_style.font = Font(color=BRANCO, bold=True)
+        header_style.fill = PatternFill(start_color=VERDE, end_color=VERDE, fill_type=SOLID)
+        header_style.border = self.create_border()
+        header_style.alignment = Alignment(horizontal=CENTER, vertical=CENTER)
+        return header_style
 
+    def create_name_style(self):
+        name_style = NamedStyle('NomeParticipante')
+        name_style.font = Font(color=PRETO, bold=True)
+        name_style.fill = PatternFill(start_color=AMARELO, end_color=AMARELO, fill_type=SOLID)
+        name_style.border = self.create_border()
+        return name_style
+
+    def create_border(self):
+        linha_borda = Side(style='thin', color=PRETO)
+        return Border(left=linha_borda, right=linha_borda, top=linha_borda, bottom=linha_borda, )
+
+    def set_column_widths(self, ws: worksheet):
+        columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+        larguras = [17, 50, 17, 55, 11, 17, 22, 21]
+
+        for col, largura in zip(columns, larguras):
+            ws.column_dimensions[col].width = largura
+
+    def set_header_cells(self, ws: worksheet, sorteio: Sorteio, header_style: NamedStyle, name_style: NamedStyle):
+        ws['A1'] = sorteio.nome_do_sorteio
+        ws.merge_cells('A1:B1')
+        ws['A1'].style = header_style
+        ws['B1'].style = header_style
+
+        ws['A2'] = sorteio.nome_vencedor
+        ws.merge_cells('A2:B2')
+        ws['A2'].style = name_style
+        ws['B2'].style = name_style
+
+        header_labels = ['CPF', 'RG', 'Telefone', 'Email', 'Endereço de envio', 'CEP']
+        values = [sorteio.cpf_vencedor, sorteio.rg_vencedor, sorteio.telefone_vencedor,
+                  sorteio.email_vencedor, sorteio.endereco_vencedor, sorteio.cep_vencedor]
+        borda = self.create_border()
+        for linha, rotulo in enumerate(header_labels, start=3):
+            ws.cell(row=linha, column=1, value=rotulo).border = borda
+            ws.cell(row=linha, column=2, value=values[linha - 3]).border = borda
+
+        header_row = ws['A1:H1']
+        for cell in header_row[0]:
+            cell.style = header_style
+
+    def set_premio_cells(self, ws: worksheet, sorteio: Sorteio):
+        ws['C1'] = 'Código do produto'
+        ws['D1'] = 'Descrição'
+        ws['E1'] = 'Quantidade'
+        ws['F1'] = 'CC'
+        ws['G1'] = 'Data fechamento do cc'
+        ws['H1'] = 'Responsável pelo cc'
+
+        premios = sorteio.__dict__['premios']
+
+        for linha, premio in enumerate(premios, start=3):
+            for coluna, valor in enumerate(premio, start=3):
+                ws.cell(row=linha, column=coluna, value=valor).border = self.create_border()
+
+    # noinspection PyTypeChecker
+    def busca_produto(self, codigo: str) -> [pd.Series, None]:
+        if self.__tb_produtos is None:
+            self.__tb_produtos = self.__arquivo.abre_documento('Abrirtabela de produtos')
+            try:
+                self.__tb_produtos = pd.read_excel(
+                    self.__tb_produtos, sheet_name='Consolidada', header=5, dtype='string',
+                    usecols=['Código Produto', 'Descrição do Produto', 'Estado/UF/Região']
+                )
+            except:
+                self.__tb_produtos = None
+                return None
+
+            filtro = self.__tb_produtos[self.__tb_produtos.columns[2]] == "SC"
+            self.__tb_produtos = self.__tb_produtos[filtro]
+            self.__tb_produtos.set_index(self.__tb_produtos.columns[0], inplace=True)
+
+        produto = 0
+        try:
+            produto = self.__tb_produtos.loc[str(codigo)]
+        finally:
+            return produto

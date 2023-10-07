@@ -1,12 +1,12 @@
-def limpa_texto(texto: str, filtro):
-    return ''.join(filter(filtro, texto))
+def limpa_texto(texto, filtro) -> str:
+    return ''.join(filter(filtro, str(texto)))
 
 
-def apenas_letras_e_espacos(d: str):
+def apenas_letras_e_espacos(d: str) -> bool:
     return d.isalpha() or d.isspace()
 
 
-def apenas_digitos(d: str):
+def apenas_digitos(d: str) -> bool:
     return d.isdigit()
 
 
@@ -20,10 +20,3 @@ def sanitiza_nome(nome: str) -> str:
     nome_limpo = limpa_texto(nome, apenas_letras_e_espacos)
     nome_capitalizado = ' '.join([parte_do_nome.title() for parte_do_nome in nome_limpo.split()])
     return nome_capitalizado
-
-
-if __name__ == '__main__':
-    nome = sanitiza_nome('edimar fr3eitas de Sá')
-    print(nome)
-    cpf = sanitiza_cpf('048d245.251-01')
-    print(cpf)
