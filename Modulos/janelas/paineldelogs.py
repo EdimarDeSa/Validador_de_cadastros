@@ -1,12 +1,18 @@
-from ttkbootstrap import *
+from ttkbootstrap import Toplevel
+from ttkbootstrap.scrolled import ScrolledText
 from ttkbootstrap.constants import *
 
-from .models import Tabelas
-from .imprimir import Impressao
+from Modulos.models.tabelas import *
+from Modulos.imprimir import *
 
 
-class LogPanel(Toplevel):
+__all__ = ['PainelDeLogs']
+
+
+class PainelDeLogs(Toplevel):
     def __init__(self, impressoras: Impressao, tabelas: Tabelas, **kwargs):
+        super(PainelDeLogs, self).__init__(title='Monitoramento de impressões', resizable=[False, False], topmost=True)
+
         self.__incia_widgets(**kwargs.copy())
         self.servico_impressoras = impressoras
         self.__tabelas = tabelas
@@ -17,8 +23,10 @@ class LogPanel(Toplevel):
     def __incia_widgets(self, **kwargs):
         kwargs['state'] = DISABLED
         kwargs['wrap'] = WORD
-        super().__init__(title='Para printar')
+        kwargs['bootstyle'] = ROUND
+        kwargs['autohide'] = True
         self.geometry(f'800x500+{self.winfo_rootx() + 600}+{self.winfo_rooty()}')
+        self.position_center()
 
         self._tela1 = ScrolledText(self, **kwargs)
         self._tela1.place(relx=0, rely=0, relheight=1, relwidth=0.5)
@@ -62,18 +70,18 @@ class LogPanel(Toplevel):
         self.__log_impressora(f'{impressora} - Estimado: {tempo_de_impressao} min', indice)
 
     def __log_impressora(self, info: str, screen_number: int):
-        tela = self.__seleciona_tela(screen_number)
+        tela = self.__seleciona_tela(screen_number).text
         tela.config(state=NORMAL)
         tela.insert(END, f'{info}\n')
         tela.config(state=DISABLED)
 
     def __log_clear(self, screen_number: int):
-        tela = self.__seleciona_tela(screen_number)
+        tela = self.__seleciona_tela(screen_number).text
         tela.config(state=NORMAL)
         tela.delete('1.0', END)
         tela.config(state=DISABLED)
 
-    def __seleciona_tela(self, screen_number: int):
+    def __seleciona_tela(self, screen_number: int) -> ScrolledText:
         return getattr(self, f'_tela{screen_number}')
 
     def __close_event(self):

@@ -2,7 +2,10 @@ import pandas as pd
 from win32print import ClosePrinter, EnumJobs, EnumPrinters, OpenPrinter
 from win32printing import Printer
 
-from Modulos.constants import CPF, NOME
+from Modulos.constants import *
+
+
+__all__ = ['Impressao']
 
 
 class Impressora:

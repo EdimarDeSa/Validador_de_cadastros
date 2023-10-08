@@ -1,6 +1,8 @@
 from json import load
 from pathlib import Path
 
+
+__all__ = ['Configuracoes']
 BASE = Path(__file__).resolve().parent.parent
 ARQUIVO_DE_CONFIGURACOES = BASE / 'configuracoes/configuracoes.json'
 

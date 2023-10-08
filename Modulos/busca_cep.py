@@ -1,6 +1,9 @@
 from requests import get
 
 
+__all__ = ['BuscaEndereco']
+
+
 class BuscaEndereco:
     def __init__(self, cep: str):
         self._cep = self._sanitiza_cep(cep)

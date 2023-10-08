@@ -4,6 +4,9 @@ from Modulos.constants import *
 from Modulos.models.produto import Produto
 
 
+__all__ = ['Sorteio']
+
+
 class Sorteio(Frame):
     def __init__(self, master: Frame, nome_do_sorteio):
         super(Sorteio, self).__init__(master)

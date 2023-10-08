@@ -41,3 +41,4 @@ compilado/
 csv_teste/
 data/
 /auto-py-to-exe-configs.json
+*.bat

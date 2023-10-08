@@ -1,3 +1,6 @@
+__all__ = ['sanitiza_cpf', 'sanitiza_nome']
+
+
 def limpa_texto(texto, filtro) -> str:
     return ''.join(filter(filtro, str(texto)))
 

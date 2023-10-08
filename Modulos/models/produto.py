@@ -1,3 +1,6 @@
+__all__ = ['Produto']
+
+
 class Produto:
     def __init__(self, codigo='', nome='', quantidade='', cc='', data_fechamento_cc='', responsavel_cc='', *kw):
         if kw:

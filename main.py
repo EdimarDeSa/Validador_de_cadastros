@@ -1,20 +1,21 @@
 import sys
-import os
+from pathlib import Path
 
-from ttkbootstrap import *
+from ttkbootstrap import Window, Frame, Notebook
 
 from Modulos.constants import *
-from Modulos.configuracoes import Configuracoes
-from Modulos.imprimir import Impressao
-from Modulos.models import Tabelas
-from Modulos.janelas.janelas import JanelaImpressao, JanelaSorteios, JanelaRegistroDeVencedor
-from Modulos.imagens import Imagens
+from Modulos.configuracoes import *
+from Modulos.imprimir import *
+from Modulos.models import *
+from Modulos.janelas import *
+from Modulos.imagens import *
 
 
 class Main(Window):
     def __init__(self):
         self.configuracoes = Configuracoes()
-        Window.__init__(self, iconphoto='./icons/icons8-lottery-50.png')
+        icon_path = str(Path(ICONE).resolve())
+        Window.__init__(self, iconphoto=icon_path)
         self.impressao = Impressao()
         self.tabelas = Tabelas(self.impressao)
         self._imagens = Imagens()

@@ -8,10 +8,13 @@ from pandas.errors import ParserError
 
 from .constants import EXTENSOES, CPF, CODECS, SEPARADORES, EXTENSAO_DEFAULT
 
+
+__all__ = ['Arquivos']
+
 DIRETORIO_BASE = Path(__file__).resolve().parent.parent
 
 
-class AbreArquivo:
+class Arquivos:
     @staticmethod
     def abre_documento(titulo='') -> Path:
         diretorio_documento = askopenfilename(defaultextension=EXTENSAO_DEFAULT, filetypes=EXTENSOES,

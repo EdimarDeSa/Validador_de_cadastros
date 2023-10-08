@@ -3,6 +3,9 @@ from pathlib import Path
 from ttkbootstrap import PhotoImage
 
 
+__all__ = ['Imagens']
+
+
 class Imagens:
     def __init__(self):
         self.BASE = (Path(__file__).resolve().parent.parent / "icons")
