@@ -1,39 +1,62 @@
-import re
-
-import pandas as pd
-import requests
+from requests import get
 
 
-class Cep:
+__all__ = ['BuscaEndereco']
+
+
+class BuscaEndereco:
     def __init__(self, cep: str):
-        self.__dirt_cep = cep
-        api_viacep = f'http://www.viacep.com.br/ws/{self.__clean_cep}/json'
+        self._cep = self._sanitiza_cep(cep)
+        if not self._valida_cep():
+            raise ValueError("CEP inválido.")
+        self._dados = self._pesquisa_cep()
 
-        with requests.get(api_viacep) as response:
-            self.data = self.__response_verification(response)
+    @staticmethod
+    def _sanitiza_cep(cep: str) -> str:
+        return ''.join(filter(str.isdigit, cep))
 
-    @property
-    def __clean_cep(self) -> str:
-        cleaned_cep = re.sub(r'\D+', '', self.__dirt_cep)
-        cleaned_cep = cleaned_cep + "0"*(8 - len(cleaned_cep))
-        return cleaned_cep
+    def _valida_cep(self) -> bool:
+        return len(self._cep) == 8
 
-    def __response_verification(self, response):
-        if response.status_code != 200:
-            return self.__error_data()
-
-        data = response.json()
-        if 'erro' in data:
-            return self.__error_data()
-
-        return data
+    def _pesquisa_cep(self) -> dict:
+        url = f"https://viacep.com.br/ws/{self._cep}/json/"
+        return get(url).json()
 
     @property
-    def series(self) -> pd.Series:
-        series = pd.Series(self.data)
-        return series
+    def cep(self) -> str:
+        return self._dados['cep']
 
-    def __error_data(self) -> dict:
-        return {
-            'cep': self.__clean_cep, 'logradouro': '', 'complemento': '', 'bairro': '', 'localidade': '', 'uf': '', 'ibge': '', 'gia': '', 'ddd': '', 'siafi': ''
-        }
+    @property
+    def logradouro(self) -> str:
+        return self._dados['logradouro']
+
+    @property
+    def complemento(self) -> str:
+        return self._dados['complemento']
+
+    @property
+    def bairro(self) -> str:
+        return self._dados['bairro']
+
+    @property
+    def localidade(self) -> str:
+        return self._dados['localidade']
+
+    @property
+    def uf(self) -> str:
+        return self._dados['uf']
+
+    @property
+    def __dict__(self) -> dict:
+        return self._dados
+
+    def __str__(self) -> str:
+        return f'CEP: {self.cep} - Cidade: {self.localidade} - Estado: {self.uf}'
+
+    def __repr__(self) -> repr:
+        return repr(self._dados)
+
+
+if __name__ == '__main__':
+    busca = BuscaEndereco('88.132-600')
+    print(busca.__dict__)
