@@ -1,3 +1,16 @@
+# Copyright (c) 2023 Edimar de Sá
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+
 import sys
 from pathlib import Path
 
@@ -39,26 +52,26 @@ class Main(Window):
         self.notebook.enable_traversal()
 
         tab_registro_de_campanha = Frame(self.notebook, name='tab_registro_de_campanha')
-        self.notebook.add(tab_registro_de_campanha, text='Registro de sorteios')
+        self.notebook.add(tab_registro_de_campanha, text='Registro de sorteios', underline=0)
         JanelaSorteios(tab_registro_de_campanha, self.configuracoes, self.tabelas,
-                       list_sort=self._lista_de_sorteios, teste=True)
+                       list_sort=self._lista_de_sorteios, teste=False)
 
         tab_impressao = Frame(self.notebook, name='tab_impressao')
-        self.notebook.add(tab_impressao, text='Validação e impressão')
-        JanelaImpressao(tab_impressao, self.configuracoes, self.tabelas, self.impressao, teste=True)
+        self.notebook.add(tab_impressao, text='Validação e Impressão', underline=12)
+        JanelaImpressao(tab_impressao, self.configuracoes, self.tabelas, self.impressao, teste=False)
 
         tab_registro_de_vencedor = Frame(self.notebook, name='tab_registro_de_vencedor')
-        self.notebook.add(tab_registro_de_vencedor, text='Registro de vencedor')
+        self.notebook.add(tab_registro_de_vencedor, text='Registro de vencedor', underline=12)
         JanelaRegistroDeVencedor(tab_registro_de_vencedor, self.configuracoes, self.tabelas,
-                                 list_sort=self._lista_de_sorteios, teste=True)
+                                 list_sort=self._lista_de_sorteios, teste=False)
 
         # tab_relatorios = Frame(self.notebook, name='tab_relatorios')
         # self.notebook.add(tab_relatorios, text='Relatórios do sorteio')
-        # JanelaRelatorios(tab_relatorios, self.configuracoes, self.tabelas, teste=True)
+        # JanelaRelatorios(tab_relatorios, self.configuracoes, self.tabelas, teste=False)
 
         # tab_wide_chat = Frame(self.notebook, name='tab_wide_chat')
         # self.notebook.add(tab_wide_chat, text='Wide Chat')
-        # JanelaWideChat(tab_wide_chat, self.configuracoes, self.tabelas, teste=True)
+        # JanelaWideChat(tab_wide_chat, self.configuracoes, self.tabelas, teste=False)
 
     def inicia_variaveis_globais(self):
         self._lista_de_sorteios = []

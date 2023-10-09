@@ -10,7 +10,7 @@ from Modulos.funcoes_sanitizacao import *
 from Modulos.constants import *
 from Modulos.arquivo import *
 from Modulos.imprimir import *
-from Modulos.busca_cep import *
+# from Modulos.busca_cep import *
 from Modulos.models.sorteio import *
 from Modulos.models.produto import *
 from Modulos.data_hora_br import *
@@ -126,17 +126,17 @@ class Tabelas:
 
         # Thread(target=self.__busca_enderecos, daemon=True).start()
 
-    def __busca_enderecos(self):
-        self.busca = True
-        infos_ceps = []
-        for cep in self.__tb_inscricoes_validas.CEP:
-            infos = BuscaEndereco(cep).__dict__
-            infos_ceps.append(infos)
-            sleep(2)
-        df_ceps = pd.DataFrame(infos_ceps, dtype='string')
-        self.__tb_inscricoes_validas = self.__tb_inscricoes_validas.merge(df_ceps, right_index=True, left_index=True)
+    # def __busca_enderecos(self):
+    #     self.busca = True
+    #     infos_ceps = []
+    #     for cep in self.__tb_inscricoes_validas.CEP:
+    #         infos = BuscaEndereco(cep).__dict__
+    #         infos_ceps.append(infos)
+    #         sleep(2)
+    #     df_ceps = pd.DataFrame(infos_ceps, dtype='string')
+    #     self.__tb_inscricoes_validas = self.__tb_inscricoes_validas.merge(df_ceps, right_index=True, left_index=True)
 
-        self.busca = False
+    #     self.busca = False
 
     @property
     def get_total_cadastros_repetidos(self) -> int:

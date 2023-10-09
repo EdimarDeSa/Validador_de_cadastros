@@ -37,8 +37,7 @@ __pypackages__/
 .idea/
 
 # Others
-compilado/
-csv_teste/
 data/
-/auto-py-to-exe-configs.json
+auto-py-to-exe/
 *.bat
+teste.py

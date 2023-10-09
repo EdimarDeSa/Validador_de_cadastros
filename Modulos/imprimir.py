@@ -103,7 +103,7 @@ class Impressao(Impressora):
         if printer:
             return printer
 
-    def __imprime_inscrito(self, row):
+    def __imprime_inscrito(self, row: pd.Series):
         impressora = self.verifica_vez_da_impressora()
         nome_participante = row[NOME]
         cpf = row[CPF]

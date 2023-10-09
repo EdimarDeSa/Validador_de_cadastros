@@ -13,14 +13,14 @@ class PainelDeLogs(Toplevel):
     def __init__(self, impressoras: Impressao, tabelas: Tabelas, **kwargs):
         super(PainelDeLogs, self).__init__(title='Monitoramento de impressões', resizable=[False, False], topmost=True)
 
-        self.__incia_widgets(**kwargs.copy())
+        self._incia_widgets(**kwargs.copy())
         self.servico_impressoras = impressoras
         self.__tabelas = tabelas
         self.monitorando = False
 
-        self.protocol(self.wm_protocol()[0], self.__close_event)
+        self.protocol(self.wm_protocol()[0], self._close_event)
 
-    def __incia_widgets(self, **kwargs):
+    def _incia_widgets(self, **kwargs):
         kwargs['state'] = DISABLED
         kwargs['wrap'] = WORD
         kwargs['bootstyle'] = ROUND
@@ -37,21 +37,21 @@ class PainelDeLogs(Toplevel):
     def start_monitoramento(self):
         self.monitorando = True
         self.__tabelas.inicia_tb_jobs_em_andamento()
-        self.after(1000, self.__monitoramento)
+        self.after(2000, self._monitoramento)
 
-    def __monitoramento(self):
+    def _monitoramento(self):
         jobs = self.servico_impressoras.printers_job_checker()
         self.__tabelas.update_tb_jobs_em_andamento(jobs)
         for indice, impressora in enumerate(self.servico_impressoras.get_lista_de_impresoras_em_uso(), start=1):
             total_na_fila = self.__tabelas.get_total_jobs_em_andamento(impressora)
             try:
-                self.__log_clear(indice)
+                self._log_clear(indice)
                 if not total_na_fila:
-                    self.__impressoes_finalizadas(impressora, indice)
+                    self._impressoes_finalizadas(impressora, indice)
                     break
-                self.__imprime_contador(indice, impressora, total_na_fila)
+                self._imprime_contador(indice, impressora, total_na_fila)
                 log = self.__tabelas.get_log_jobs_em_andamento(impressora)
-                self.__log_impressora(log, indice)
+                self._log_impressora(log, indice)
             except AttributeError:
                 break
 
@@ -60,31 +60,31 @@ class PainelDeLogs(Toplevel):
             self.monitorando = False
             return
 
-        self.after(2000, self.__monitoramento)
+        self.after(2000, self._monitoramento)
 
-    def __impressoes_finalizadas(self, impressora: str, indice: int):
-        self.__log_impressora(f'{impressora} - Impressões finalizadas', indice)
+    def _impressoes_finalizadas(self, impressora: str, indice: int):
+        self._log_impressora(f'{impressora} - Impressões finalizadas', indice)
 
-    def __imprime_contador(self, indice: int, impressora: str, total_de_jobs: int):
+    def _imprime_contador(self, indice: int, impressora: str, total_de_jobs: int):
         tempo_de_impressao = self.calcula_tempo_de_impressao_total(total_de_jobs)
-        self.__log_impressora(f'{impressora} - Estimado: {tempo_de_impressao} min', indice)
+        self._log_impressora(f'{impressora} - Estimado: {tempo_de_impressao} min', indice)
 
-    def __log_impressora(self, info: str, screen_number: int):
-        tela = self.__seleciona_tela(screen_number).text
+    def _log_impressora(self, info: str, screen_number: int):
+        tela = self._seleciona_tela(screen_number).text
         tela.config(state=NORMAL)
         tela.insert(END, f'{info}\n')
         tela.config(state=DISABLED)
 
-    def __log_clear(self, screen_number: int):
-        tela = self.__seleciona_tela(screen_number).text
+    def _log_clear(self, screen_number: int):
+        tela = self._seleciona_tela(screen_number).text
         tela.config(state=NORMAL)
         tela.delete('1.0', END)
         tela.config(state=DISABLED)
 
-    def __seleciona_tela(self, screen_number: int) -> ScrolledText:
+    def _seleciona_tela(self, screen_number: int) -> ScrolledText:
         return getattr(self, f'_tela{screen_number}')
 
-    def __close_event(self):
+    def _close_event(self):
         if self.monitorando:
             return
         else:
