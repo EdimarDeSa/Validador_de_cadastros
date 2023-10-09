@@ -52,16 +52,16 @@ class Main(Window):
         self.notebook.enable_traversal()
 
         tab_registro_de_campanha = Frame(self.notebook, name='tab_registro_de_campanha')
-        self.notebook.add(tab_registro_de_campanha, text='Registro de sorteios')
+        self.notebook.add(tab_registro_de_campanha, text='Registro de sorteios', underline=0)
         JanelaSorteios(tab_registro_de_campanha, self.configuracoes, self.tabelas,
                        list_sort=self._lista_de_sorteios, teste=False)
 
         tab_impressao = Frame(self.notebook, name='tab_impressao')
-        self.notebook.add(tab_impressao, text='Validação e impressão')
+        self.notebook.add(tab_impressao, text='Validação e Impressão', underline=12)
         JanelaImpressao(tab_impressao, self.configuracoes, self.tabelas, self.impressao, teste=False)
 
         tab_registro_de_vencedor = Frame(self.notebook, name='tab_registro_de_vencedor')
-        self.notebook.add(tab_registro_de_vencedor, text='Registro de vencedor')
+        self.notebook.add(tab_registro_de_vencedor, text='Registro de vencedor', underline=12)
         JanelaRegistroDeVencedor(tab_registro_de_vencedor, self.configuracoes, self.tabelas,
                                  list_sort=self._lista_de_sorteios, teste=False)
 

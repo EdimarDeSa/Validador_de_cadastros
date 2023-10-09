@@ -2,7 +2,7 @@ from tkinter import Event
 from pathlib import Path
 from threading import Thread
 
-from ttkbootstrap import Frame, Label, Button, StringVar, DateEntry, Combobox
+from ttkbootstrap import Frame, Label, Button, StringVar, DateEntry, Combobox, Entry
 from ttkbootstrap.dialogs import Messagebox
 
 from Modulos.janelas.janelapadrao import *
@@ -38,9 +38,9 @@ class JanelaImpressao(JanelaPadrao):
 
         # Teste
         if kwargs.get('teste', False):
-            date_entry: DateEntry = master.children.get('calendario')
-            date_entry.entry.delete(0, END)
-            date_entry.entry.insert(0, '28/09/2023')
+            date_entry: Entry = master.children.get('calendario').entry
+            date_entry.delete(0, END)
+            date_entry.insert(0, '28/09/2023')
             self.abre_tb_inscritos(Path('./data/9-28-2023-Evento_de_lancamentos-_Abril.csv').resolve())
             self.abre_tb_colaboradores(Path('./data/Colaboradores.csv').resolve())
             self.escreve_resultado_de_verificacao()
