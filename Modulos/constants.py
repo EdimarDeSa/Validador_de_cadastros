@@ -2,7 +2,7 @@ from ttkbootstrap.constants import *
 
 ICONE = './icons/icons8-lottery-50.png'
 
-CODECS: set = {
+CODECS: list = [
     'utf_8_sig', 'cp65001', 'utf8', 'UTF', 'U8', 'unicode-1-1-utf-7', 'U7', 'UTF-16LE', 'UTF-16BE', 'utf16',
     'U16', 'UTF-32LE', 'UTF-32BE', 'utf32', 'U32', 's_jisx0213', 'sjisx0213', 'shiftjisx0213',
     'shiftjis2004', 's_jis', 'sjis', 'shiftjis', 'csshiftjis', 'cyrillic-asian', 'cp154', 'pt154',
@@ -24,7 +24,7 @@ CODECS: set = {
     'cp869', 'cp866', 'cp865', 'cp864', 'cp863', 'cp862', 'cp861', 'cp860', 'cp858', 'cp857', 'cp856',
     'cp855', 'cp852', 'cp850', 'cp775', 'cp737', 'cp720', 'cp500', 'cp437', 'cp424', 'cp273', 'cp037',
     'big5hkscs', 'big5', 'ascii'
-}
+]
 
 SEPARADORES: set = {',', ';', '\t'}
 
@@ -43,6 +43,7 @@ CPF: str = 'CPF'
 VALIDADE_CPF: str = 'Validade_cpf'
 DUPLICADA: str = 'Duplicada'
 COLABORADOR: str = 'Colaborador'
+ENDERECO = 'Endereço completo'
 
 COLUNAS_SERVICO_IMPRESSORAS = ['JobId', 'pPrinterName', 'pMachineName', 'pUserName', 'pDocument', 'pDatatype',
                                'pStatus', 'Status', 'Priority', 'Position', 'TotalPages', 'PagesPrinted']

@@ -49,7 +49,7 @@ class Impressao(Impressora):
 
         for parte in lista_nome:
             total_de_caracteres_linha1 += (len(parte) + 1)
-            if total_de_caracteres_linha1 < 30:
+            if total_de_caracteres_linha1 < 22:
                 linha1 = f'{linha1} {parte}'
             else:
                 linha2 = f'{linha2} {parte}'
@@ -69,11 +69,11 @@ class Impressao(Impressora):
 
         linha1, linha2 = nome, ''
 
-        if len(nome) > 28: linha1, linha2 = self.contagem_de_caracteres(nome)
+        if len(nome) > 20: linha1, linha2 = self.contagem_de_caracteres(nome)
 
         with Printer(linegap=2, printer_name=impressora, doc_name=nome) as printer:
             printer.text(f"CPF: {cpf}", align='right', font_config=fonte_cpf)
-            printer.text(f'''\n\n\n{linha1}\n{linha2}''', font_config=fonte_nome)
+            printer.text(f'''{linha1}\n{linha2}''', align='left', font_config=fonte_nome)
 
     def printers_job_checker(self) -> list[dict]:
         jobs_list = []
@@ -82,7 +82,10 @@ class Impressao(Impressora):
             self.__inicia_phandle_list()
 
         for phandle in self.__phandle_list:
-            jobs = EnumJobs(phandle, 0, -1)
+            try:
+                jobs = EnumJobs(phandle, 0, -1)
+            except Exception:
+                jobs = []
             jobs_list.extend(list(jobs))
 
         if not jobs_list:

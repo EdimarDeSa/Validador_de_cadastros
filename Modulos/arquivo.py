@@ -6,7 +6,7 @@ from tkinter.messagebox import showwarning
 import pandas as pd
 from pandas.errors import ParserError
 
-from .constants import EXTENSOES, CPF, CODECS, SEPARADORES, EXTENSAO_DEFAULT
+from .constants import EXTENSOES, CPF, CODECS, SEPARADORES, EXTENSAO_DEFAULT, ENDERECO
 
 
 __all__ = ['Arquivos']
