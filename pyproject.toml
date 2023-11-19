@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "validador-de-cadastros"
+version = "0.3.0"
+description = ""
+authors = ["Edimar de Sá <edimarfreitas95@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+pydantic = "^2.4.2"
+tinydb = "^4.8.0"
+validate-docbr = "^1.10.0"
+
+
+[tool.poetry.group.dev.dependencies]
+blue = "^0.9.1"
+isort = "^5.12.0"
+taskipy = "^1.12.0"
+pytest = "^7.4.3"
+
+
+[tool.poetry.group.compilling.dependencies]
+auto-py-to-exe = "^2.42.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.taskipy.settings]
+use_vars = true
+
+[tool.taskipy.variables]
+src_dir = "."
+
+[tool.taskipy.tasks]
+test = "pytest --cache-clear -s -x {src_dir} -vv"
+post_test = "task lint"
+lint = "task lint_blue && task lint_isort"
+lint_blue = "blue -l 88 {src_dir}"
+lint_isort = "isort -l 88 {src_dir}"
