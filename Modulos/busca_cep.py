@@ -1,6 +1,5 @@
 from requests import get
 
-
 __all__ = ['BuscaEndereco']
 
 
@@ -8,7 +7,7 @@ class BuscaEndereco:
     def __init__(self, cep: str):
         self._cep = self._sanitiza_cep(cep)
         if not self._valida_cep():
-            raise ValueError("CEP inválido.")
+            raise ValueError('CEP inválido.')
         self._dados = self._pesquisa_cep()
 
     @staticmethod
@@ -19,7 +18,7 @@ class BuscaEndereco:
         return len(self._cep) == 8
 
     def _pesquisa_cep(self) -> dict:
-        url = f"https://viacep.com.br/ws/{self._cep}/json/"
+        url = f'https://viacep.com.br/ws/{self._cep}/json/'
         return get(url).json()
 
     @property

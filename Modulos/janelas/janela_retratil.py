@@ -1,10 +1,9 @@
-from ttkbootstrap import Frame, Label, Button
+from ttkbootstrap import Button, Frame, Label
 from ttkbootstrap.scrolled import ScrolledFrame
 from ttkbootstrap.style import Bootstyle
 
 from Modulos.constants import *
 from Modulos.imagens import *
-
 
 __all__ = ['CollapsingFrame']
 
@@ -20,7 +19,7 @@ class CollapsingFrame(ScrolledFrame):
         # widget images
         self.images = Imagens()
 
-    def add(self, child, title="", bootstyle=PRIMARY, **kwargs):
+    def add(self, child, title='', bootstyle=PRIMARY, **kwargs):
         """Add a child to the collapsible frame
 
         Parameters:
@@ -54,14 +53,21 @@ class CollapsingFrame(ScrolledFrame):
         def _func(c=child) -> any:
             return self._toggle_open_close(c)
 
-        btn = Button(master=frm, image=self.images.img_seta_para_cima, bootstyle=style_color, command=_func)
+        btn = Button(
+            master=frm,
+            image=self.images.img_seta_para_cima,
+            bootstyle=style_color,
+            command=_func,
+        )
         btn.pack(padx=(0, 10), side=RIGHT)
 
         if kwargs.get('edita_sorteio'):
             edita_sorteio = kwargs.get('edita_sorteio')
             edit = Button(
-                master=frm, image=self.images.img_editar, bootstyle=style_color,
-                command=lambda c=child: edita_sorteio(c)
+                master=frm,
+                image=self.images.img_editar,
+                bootstyle=style_color,
+                command=lambda c=child: edita_sorteio(c),
             )
             edit.pack(padx=(0, 10), side=RIGHT)
 
@@ -87,4 +93,3 @@ class CollapsingFrame(ScrolledFrame):
         else:
             child.grid()
             child.btn.configure(image=self.images.img_seta_para_cima)
-

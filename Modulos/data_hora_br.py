@@ -1,15 +1,16 @@
 from datetime import datetime
 
-
 __all__ = ['DatasBr']
 
 
 class DatasBr:
     def __init__(
-            self,
-            data: str = None, formato_data='%d/%m/%Y',
-            hora: str = None, formato_hora='%H:%M:%S',
-            data_e_hora: str = None
+        self,
+        data: str = None,
+        formato_data='%d/%m/%Y',
+        hora: str = None,
+        formato_hora='%H:%M:%S',
+        data_e_hora: str = None,
     ):
         """
         Caso não seja passado nenhum parâmetro será usado a data e hora atual.
@@ -24,18 +25,35 @@ class DatasBr:
         self._data: datetime = None
         self._hora: datetime = None
         self._nomes_meses = {
-            1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
-            7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
+            1: 'Janeiro',
+            2: 'Fevereiro',
+            3: 'Março',
+            4: 'Abril',
+            5: 'Maio',
+            6: 'Junho',
+            7: 'Julho',
+            8: 'Agosto',
+            9: 'Setembro',
+            10: 'Outubro',
+            11: 'Novembro',
+            12: 'Dezembro',
         }
         self._nomes_semana = {
-            0: "Segunda-feira", 1: "Terça-feira", 2: "Quarta-feira", 3: "Quinta-feira",
-            4: "Sexta-feira", 5: "Sábado", 6: "Domingo"
+            0: 'Segunda-feira',
+            1: 'Terça-feira',
+            2: 'Quarta-feira',
+            3: 'Quinta-feira',
+            4: 'Sexta-feira',
+            5: 'Sábado',
+            6: 'Domingo',
         }
         self._converte(data, hora, data_e_hora)
 
     def _converte(self, data, hora, data_e_hora):
         if not data and not hora and not data_e_hora:
-            data_e_hora = datetime.now().strftime(f'{self._formato_data} {self._formato_hora}')
+            data_e_hora = datetime.now().strftime(
+                f'{self._formato_data} {self._formato_hora}'
+            )
 
         if data_e_hora:
             data, hora = [x for x in data_e_hora.split()]
@@ -96,9 +114,13 @@ class DatasBr:
     @property
     def __dict__(self):
         return dict(
-            data=self.data, horario=self.horario, data_e_hora=self.data_e_hora,
-            _formato_data=self._formato_data, _formato_hora=self._formato_hora,
-            nome_da_semana=self.nome_da_semana, nome_do_mes=self.nome_do_mes,
+            data=self.data,
+            horario=self.horario,
+            data_e_hora=self.data_e_hora,
+            _formato_data=self._formato_data,
+            _formato_hora=self._formato_hora,
+            nome_da_semana=self.nome_da_semana,
+            nome_do_mes=self.nome_do_mes,
             tempo_cadastro=self.tempo_cadastro(),
         )
 

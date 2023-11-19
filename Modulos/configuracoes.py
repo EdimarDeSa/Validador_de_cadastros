@@ -1,7 +1,6 @@
 from json import load
 from pathlib import Path
 
-
 __all__ = ['Configuracoes']
 BASE = Path(__file__).resolve().parent.parent
 ARQUIVO_DE_CONFIGURACOES = BASE / 'configuracoes/configuracoes.json'
@@ -27,7 +26,7 @@ class Configuracoes:
             loaded_configs: dict = load(f)
 
         for key, value in loaded_configs.items():
-            setattr(self, f"_{key}", value)
+            setattr(self, f'_{key}', value)
 
         del loaded_configs
 
@@ -46,20 +45,28 @@ class Configuracoes:
 
     @property
     def __label_titulos(self) -> dict:
-        parametros = {'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte_g} bold', }
+        parametros = {
+            'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte_g} bold',
+        }
         return parametros
 
     @property
     def __label_parametros(self) -> dict:
-        parametros = {'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte} bold', }
+        parametros = {
+            'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte} bold',
+        }
         return parametros
 
     @property
     def __label_caminho_parametros(self) -> dict:
-        parametros = {'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte_m}', }
+        parametros = {
+            'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte_m}',
+        }
         return parametros
 
     @property
     def __entry_parametros(self) -> dict:
-        parametros = {'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte}', }
+        parametros = {
+            'font': f'{self._estilo_da_fonte} {self._tamanho_da_fonte}',
+        }
         return parametros

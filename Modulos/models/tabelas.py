@@ -4,17 +4,16 @@ from typing import Literal
 import pandas as pd
 import validate_docbr.CPF
 from openpyxl import Workbook, worksheet
-from openpyxl.styles import NamedStyle, Font, Side, PatternFill, Alignment, Border
+from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
 
-from Modulos.funcoes_sanitizacao import *
-from Modulos.constants import *
 from Modulos.arquivo import *
+from Modulos.constants import *
+from Modulos.data_hora_br import *
+from Modulos.funcoes_sanitizacao import *
 from Modulos.imprimir import *
+from Modulos.models.produto import *
 # from Modulos.busca_cep import *
 from Modulos.models.sorteio import *
-from Modulos.models.produto import *
-from Modulos.data_hora_br import *
-
 
 __all__ = ['Tabelas']
 
@@ -77,13 +76,19 @@ class Tabelas:
         if not caminho:
             return
         df_sujo = self.__arquivo.abre_dataframe(caminho)
-        df_com_data = df_sujo.assign(**{
-            'Dia_do_evento': lambda df=df_sujo: df['Data'].apply(lambda x: str(x).split()[0] == data),
-        })
+        df_com_data = df_sujo.assign(
+            **{
+                'Dia_do_evento': lambda df=df_sujo: df['Data'].apply(
+                    lambda x: str(x).split()[0] == data
+                ),
+            }
+        )
         df_limpo = df_com_data.query('Dia_do_evento==True')
 
         self.__tb_inscritos = df_limpo
-        self.__tb_inscricoes_validas = pd.DataFrame(columns=COLUNAS_DA_TABELA_DE_PARTICIPANTES)
+        self.__tb_inscricoes_validas = pd.DataFrame(
+            columns=COLUNAS_DA_TABELA_DE_PARTICIPANTES
+        )
         self.__caminho_tb_inscritos = caminho
 
     @property
@@ -96,7 +101,9 @@ class Tabelas:
 
     def inicia_tb_colaboradores(self, caminho=None):
         if caminho is None:
-            caminho = self.__arquivo.abre_documento('Selecione o arquivo de colaboradores')
+            caminho = self.__arquivo.abre_documento(
+                'Selecione o arquivo de colaboradores'
+            )
 
         if not caminho:
             return
@@ -112,17 +119,29 @@ class Tabelas:
     def verifica_cadastros(self):
         self.__tb_inscritos[CPF] = self.__tb_inscritos[CPF].apply(sanitiza_cpf)
         self.__tb_inscritos[NOME] = self.__tb_inscritos[NOME].apply(sanitiza_nome)
-        self.__tb_inscritos = self.__tb_inscritos.assign(**{
-            DUPLICADA: self.__tb_inscritos.duplicated(subset=CPF, keep='last'),
-            VALIDADE_CPF: lambda df: df.query(f'{DUPLICADA}==False')[CPF].apply(self.__docbr.validate),
-            CPF: lambda df: df.query(f'{VALIDADE_CPF}==True')[CPF].apply(self.__docbr.mask),
-            COLABORADOR: lambda df: df[CPF].isin(self.__tb_colaboradores[CPF]),
-        })
+        self.__tb_inscritos = self.__tb_inscritos.assign(
+            **{
+                DUPLICADA: self.__tb_inscritos.duplicated(subset=CPF, keep='last'),
+                VALIDADE_CPF: lambda df: df.query(f'{DUPLICADA}==False')[CPF].apply(
+                    self.__docbr.validate
+                ),
+                CPF: lambda df: df.query(f'{VALIDADE_CPF}==True')[CPF].apply(
+                    self.__docbr.mask
+                ),
+                COLABORADOR: lambda df: df[CPF].isin(self.__tb_colaboradores[CPF]),
+            }
+        )
 
-        self.__total_cadastros_repetidos = (self.__tb_inscritos[DUPLICADA] == True).sum()
+        self.__total_cadastros_repetidos = (
+            self.__tb_inscritos[DUPLICADA] == True
+        ).sum()
         self.__total_cpfs_invalidos = (self.__tb_inscritos[VALIDADE_CPF] == False).sum()
-        self.__total_colaboradores_cadastrados = (self.__tb_inscritos[COLABORADOR] == True).sum()
-        self.__tb_inscricoes_validas = self.__tb_inscritos.query(f'{VALIDADE_CPF}==True and {COLABORADOR}==False')
+        self.__total_colaboradores_cadastrados = (
+            self.__tb_inscritos[COLABORADOR] == True
+        ).sum()
+        self.__tb_inscricoes_validas = self.__tb_inscritos.query(
+            f'{VALIDADE_CPF}==True and {COLABORADOR}==False'
+        )
 
         # Thread(target=self.__busca_enderecos, daemon=True).start()
 
@@ -175,10 +194,16 @@ class Tabelas:
 
     def busca_vencedor(self, cpf: str):
         cpf = self.__docbr.mask(sanitiza_cpf(cpf))
-        dados_vencedor: pd.DataFrame = self.__tb_inscricoes_validas.query(f'{CPF}=="{cpf}"')
+        dados_vencedor: pd.DataFrame = self.__tb_inscricoes_validas.query(
+            f'{CPF}=="{cpf}"'
+        )
         return dados_vencedor.values
 
-    def salva_tabela(self, nome_da_tabela: Literal['tb_vencedores', 'tb_inscricoes_validas'], caminho: str):
+    def salva_tabela(
+        self,
+        nome_da_tabela: Literal['tb_vencedores', 'tb_inscricoes_validas'],
+        caminho: str,
+    ):
         tabela: pd.DataFrame = getattr(self, f'get_{nome_da_tabela}')
         return self.__arquivo.salva_arquivo_filtrado(tabela, caminho, nome_da_tabela)
 
@@ -188,7 +213,9 @@ class Tabelas:
             for sorteio in lista_de_sorteios
             for premio in sorteio.premios
         ]
-        self.__tb_sorteios = pd.DataFrame(lista_premios, columns=["sorteio"] + COLUNAS_DA_TABELA_DE_PREMIOS)
+        self.__tb_sorteios = pd.DataFrame(
+            lista_premios, columns=['sorteio'] + COLUNAS_DA_TABELA_DE_PREMIOS
+        )
 
     def get_tb_sorteios_valores(self) -> [dict[list[Produto]], None]:
         sorteios = dict()
@@ -212,7 +239,9 @@ class Tabelas:
         data_crua = lista_de_sorteios[0].data_cadastro_vencedor
         data = DatasBr(data_e_hora=data_crua)
 
-        save_path = self.__arquivo.get_save_path(nome_base_arquivo=f'Planilha de envio {data.nome_do_mes} {data.ano}')
+        save_path = self.__arquivo.get_save_path(
+            nome_base_arquivo=f'Planilha de envio {data.nome_do_mes} {data.ano}'
+        )
         if save_path is None:
             return
         wb.save(save_path)
@@ -220,7 +249,9 @@ class Tabelas:
     def create_header_style(self):
         header_style = NamedStyle('Header')
         header_style.font = Font(color=BRANCO, bold=True)
-        header_style.fill = PatternFill(start_color=VERDE, end_color=VERDE, fill_type=SOLID)
+        header_style.fill = PatternFill(
+            start_color=VERDE, end_color=VERDE, fill_type=SOLID
+        )
         header_style.border = self.create_border()
         header_style.alignment = Alignment(horizontal=CENTER, vertical=CENTER)
         return header_style
@@ -228,13 +259,20 @@ class Tabelas:
     def create_name_style(self):
         name_style = NamedStyle('NomeParticipante')
         name_style.font = Font(color=PRETO, bold=True)
-        name_style.fill = PatternFill(start_color=AMARELO, end_color=AMARELO, fill_type=SOLID)
+        name_style.fill = PatternFill(
+            start_color=AMARELO, end_color=AMARELO, fill_type=SOLID
+        )
         name_style.border = self.create_border()
         return name_style
 
     def create_border(self):
         linha_borda = Side(style='thin', color=PRETO)
-        return Border(left=linha_borda, right=linha_borda, top=linha_borda, bottom=linha_borda, )
+        return Border(
+            left=linha_borda,
+            right=linha_borda,
+            top=linha_borda,
+            bottom=linha_borda,
+        )
 
     def set_column_widths(self, ws: worksheet):
         columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
@@ -243,7 +281,13 @@ class Tabelas:
         for col, largura in zip(columns, larguras):
             ws.column_dimensions[col].width = largura
 
-    def set_header_cells(self, ws: worksheet, sorteio: Sorteio, header_style: NamedStyle, name_style: NamedStyle):
+    def set_header_cells(
+        self,
+        ws: worksheet,
+        sorteio: Sorteio,
+        header_style: NamedStyle,
+        name_style: NamedStyle,
+    ):
         ws['A1'] = sorteio.nome_do_sorteio
         ws.merge_cells('A1:B1')
         ws['A1'].style = header_style
@@ -255,8 +299,14 @@ class Tabelas:
         ws['B2'].style = name_style
 
         header_labels = ['CPF', 'RG', 'Telefone', 'Email', 'Endereço de envio', 'CEP']
-        values = [sorteio.cpf_vencedor, sorteio.rg_vencedor, sorteio.telefone_vencedor,
-                  sorteio.email_vencedor, sorteio.endereco_vencedor, sorteio.cep_vencedor]
+        values = [
+            sorteio.cpf_vencedor,
+            sorteio.rg_vencedor,
+            sorteio.telefone_vencedor,
+            sorteio.email_vencedor,
+            sorteio.endereco_vencedor,
+            sorteio.cep_vencedor,
+        ]
         borda = self.create_border()
         for linha, rotulo in enumerate(header_labels, start=3):
             ws.cell(row=linha, column=1, value=rotulo).border = borda
@@ -278,22 +328,33 @@ class Tabelas:
 
         for linha, premio in enumerate(premios, start=3):
             for coluna, valor in enumerate(premio, start=3):
-                ws.cell(row=linha, column=coluna, value=valor).border = self.create_border()
+                ws.cell(
+                    row=linha, column=coluna, value=valor
+                ).border = self.create_border()
 
     # noinspection PyTypeChecker
     def busca_produto(self, codigo: str) -> [pd.Series, None]:
         if self.__tb_produtos is None:
-            self.__tb_produtos = self.__arquivo.abre_documento('Abrirtabela de produtos')
+            self.__tb_produtos = self.__arquivo.abre_documento(
+                'Abrirtabela de produtos'
+            )
             try:
                 self.__tb_produtos = pd.read_excel(
-                    self.__tb_produtos, sheet_name='Consolidada', header=5, dtype='string',
-                    usecols=['Código Produto', 'Descrição do Produto', 'Estado/UF/Região']
+                    self.__tb_produtos,
+                    sheet_name='Consolidada',
+                    header=5,
+                    dtype='string',
+                    usecols=[
+                        'Código Produto',
+                        'Descrição do Produto',
+                        'Estado/UF/Região',
+                    ],
                 )
             except:
                 self.__tb_produtos = None
                 return None
 
-            filtro = self.__tb_produtos[self.__tb_produtos.columns[2]] == "SC"
+            filtro = self.__tb_produtos[self.__tb_produtos.columns[2]] == 'SC'
             self.__tb_produtos = self.__tb_produtos[filtro]
             self.__tb_produtos.set_index(self.__tb_produtos.columns[0], inplace=True)
 

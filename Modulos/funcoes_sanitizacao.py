@@ -21,5 +21,7 @@ def sanitiza_cpf(cpf: str) -> str:
 
 def sanitiza_nome(nome: str) -> str:
     nome_limpo = limpa_texto(nome, apenas_letras_e_espacos)
-    nome_capitalizado = ' '.join([parte_do_nome.title() for parte_do_nome in nome_limpo.split()])
+    nome_capitalizado = ' '.join(
+        [parte_do_nome.title() for parte_do_nome in nome_limpo.split()]
+    )
     return nome_capitalizado

@@ -4,7 +4,6 @@ from win32printing import Printer
 
 from Modulos.constants import *
 
-
 __all__ = ['Impressao']
 
 
@@ -48,7 +47,7 @@ class Impressao(Impressora):
         lista_nome: list = nome.split()
 
         for parte in lista_nome:
-            total_de_caracteres_linha1 += (len(parte) + 1)
+            total_de_caracteres_linha1 += len(parte) + 1
             if total_de_caracteres_linha1 < 22:
                 linha1 = f'{linha1} {parte}'
             else:
@@ -60,20 +59,23 @@ class Impressao(Impressora):
 
     def imprimir(self, cpf: str, nome: str, impressora: str):
         fonte_cpf = {
-            "height": 6,
+            'height': 6,
         }
 
         fonte_nome = {
-            "height": 12,
+            'height': 12,
         }
 
         linha1, linha2 = nome, ''
 
-        if len(nome) > 20: linha1, linha2 = self.contagem_de_caracteres(nome)
+        if len(nome) > 20:
+            linha1, linha2 = self.contagem_de_caracteres(nome)
 
         with Printer(linegap=2, printer_name=impressora, doc_name=nome) as printer:
-            printer.text(f"CPF: {cpf}", align='right', font_config=fonte_cpf)
-            printer.text(f'''{linha1}\n{linha2}''', align='left', font_config=fonte_nome)
+            printer.text(f'CPF: {cpf}', align='right', font_config=fonte_cpf)
+            printer.text(
+                f"""{linha1}\n{linha2}""", align='left', font_config=fonte_nome
+            )
 
     def printers_job_checker(self) -> list[dict]:
         jobs_list = []

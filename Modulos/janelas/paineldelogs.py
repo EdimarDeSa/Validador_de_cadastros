@@ -1,17 +1,18 @@
 from ttkbootstrap import Toplevel
-from ttkbootstrap.scrolled import ScrolledText
 from ttkbootstrap.constants import *
+from ttkbootstrap.scrolled import ScrolledText
 
-from Modulos.models.tabelas import *
 from Modulos.imprimir import *
-
+from Modulos.models.tabelas import *
 
 __all__ = ['PainelDeLogs']
 
 
 class PainelDeLogs(Toplevel):
     def __init__(self, impressoras: Impressao, tabelas: Tabelas, **kwargs):
-        super(PainelDeLogs, self).__init__(title='Monitoramento de impressões', resizable=[False, False], topmost=True)
+        super(PainelDeLogs, self).__init__(
+            title='Monitoramento de impressões', resizable=[False, False], topmost=True
+        )
 
         self._incia_widgets(**kwargs.copy())
         self.servico_impressoras = impressoras
@@ -42,7 +43,9 @@ class PainelDeLogs(Toplevel):
     def _monitoramento(self):
         jobs = self.servico_impressoras.printers_job_checker()
         self.__tabelas.update_tb_jobs_em_andamento(jobs)
-        for indice, impressora in enumerate(self.servico_impressoras.get_lista_de_impresoras_em_uso(), start=1):
+        for indice, impressora in enumerate(
+            self.servico_impressoras.get_lista_de_impresoras_em_uso(), start=1
+        ):
             total_na_fila = self.__tabelas.get_total_jobs_em_andamento(impressora)
             try:
                 self._log_clear(indice)
@@ -67,7 +70,9 @@ class PainelDeLogs(Toplevel):
 
     def _imprime_contador(self, indice: int, impressora: str, total_de_jobs: int):
         tempo_de_impressao = self.calcula_tempo_de_impressao_total(total_de_jobs)
-        self._log_impressora(f'{impressora} - Estimado: {tempo_de_impressao} min', indice)
+        self._log_impressora(
+            f'{impressora} - Estimado: {tempo_de_impressao} min', indice
+        )
 
     def _log_impressora(self, info: str, screen_number: int):
         tela = self._seleciona_tela(screen_number).text
@@ -94,4 +99,4 @@ class PainelDeLogs(Toplevel):
     def calcula_tempo_de_impressao_total(quantidade: int) -> str:
         total_seconds = (quantidade - 1) * 2
         minutes, seconds = divmod(total_seconds, 60)
-        return f"{minutes:02}:{seconds:02}"
+        return f'{minutes:02}:{seconds:02}'

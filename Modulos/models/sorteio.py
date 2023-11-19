@@ -3,7 +3,6 @@ from ttkbootstrap import *
 from Modulos.constants import *
 from Modulos.models.produto import Produto
 
-
 __all__ = ['Sorteio']
 
 
@@ -33,12 +32,17 @@ class Sorteio(Frame):
 
     def cria_separator(self, row, col, orient, rowspan=1, columnspan=1, sticky=None):
         separator = Separator(self, orient=orient)
-        separator.grid(row=row, column=col, rowspan=rowspan, columnspan=columnspan, sticky=sticky)
+        separator.grid(
+            row=row, column=col, rowspan=rowspan, columnspan=columnspan, sticky=sticky
+        )
         return separator
 
-    def cria_label(self, linha: int, coluna: int, texto: str, name=None, font='roboto 8'):
+    def cria_label(
+        self, linha: int, coluna: int, texto: str, name=None, font='roboto 8'
+    ):
         kwargs = {}
-        if name: kwargs['name'] = name
+        if name:
+            kwargs['name'] = name
 
         label = Label(self, text=texto.upper(), font=font, **kwargs)
         label.grid(row=linha, column=coluna)
@@ -63,7 +67,9 @@ class Sorteio(Frame):
         for nome_coluna in COLUNAS_DA_TABELA_DE_PREMIOS:
             self.cria_label(linha, coluna, nome_coluna, font='roboto 10 bold')
             coluna += 1
-            self.cria_separator(linha, coluna, VERTICAL, rowspan=(len(premios)+1) * 2, sticky=NS)
+            self.cria_separator(
+                linha, coluna, VERTICAL, rowspan=(len(premios) + 1) * 2, sticky=NS
+            )
             coluna += 1
 
         linha += 1
@@ -73,7 +79,12 @@ class Sorteio(Frame):
             linha += 1
             coluna = 0
             for nome_coluna in COLUNAS_DA_TABELA_DE_PREMIOS:
-                self.cria_label(linha, coluna, getattr(premio, nome_coluna), name=f'{nome_coluna}_premio_{linha}')
+                self.cria_label(
+                    linha,
+                    coluna,
+                    getattr(premio, nome_coluna),
+                    name=f'{nome_coluna}_premio_{linha}',
+                )
                 coluna += 2
             linha += 1
             self.cria_separator(linha, 0, HORIZONTAL, columnspan=12, sticky=EW)
@@ -112,7 +123,7 @@ class Sorteio(Frame):
             'Duplicada': self.duplicada_vencedor,
             'Validade_cpf': self.validade_cpf_vencedor,
             'Colaborador': self.colaborador_vencedor,
-            'premios': [premio.valores for premio in self.premios]
+            'premios': [premio.valores for premio in self.premios],
         }
         return dicionario
 
