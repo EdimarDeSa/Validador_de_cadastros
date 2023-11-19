@@ -41,3 +41,4 @@ data/
 auto-py-to-exe/
 *.bat
 teste.py
+db.json
