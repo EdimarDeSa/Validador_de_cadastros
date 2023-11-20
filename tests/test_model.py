@@ -21,6 +21,8 @@ FUNCIONARIOS_PATH = 'C:/Users/Edimar/Documents/GitHub/Validador_de_cadastros/dat
 class TestModel:
     model = Model()
     model.update_event_date('28/09/2023')
+    model.set_hora_inicio('19:00:00')
+    model.set_hora_fim('19:40:00')
 
     def test_insert_single_participant(self):
         entrada = PARTICIPANTE
@@ -73,7 +75,7 @@ class TestModel:
         resultado = self.model.read_file(Path(entrada).resolve())
         resultado = self.model.create_participants(resultado)
 
-        esperado = 2, 3, 4, 5, 6
+        esperado = 2, 3, 4, 5
 
         comparacao = resultado == esperado
 
@@ -84,7 +86,7 @@ class TestModel:
 
         resultado = entrada.inscricoes_validas
 
-        esperado = 5
+        esperado = 4
 
         comparacao = resultado == esperado
 
@@ -106,7 +108,7 @@ class TestModel:
 
         resultado = entrada.cadastros_repetidos
 
-        esperado = 6
+        esperado = 5
 
         comparacao = resultado == esperado
 
@@ -118,6 +120,17 @@ class TestModel:
         resultado = entrada.cpfs_invalidos
 
         esperado = 4
+
+        comparacao = resultado == esperado
+
+        assert comparacao
+
+    def test_sum_of_out_of_time(self):
+        entrada = self.model.contadores
+
+        resultado = entrada.out_of_time
+
+        esperado = 3
 
         comparacao = resultado == esperado
 
