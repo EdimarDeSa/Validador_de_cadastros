@@ -147,32 +147,37 @@ class Model:
         self.event_params.set_hora_fim(value)
 
     def _validate_participants(self, participant: Participant) -> bool:
-        if participant.data_de_cadastro.date() != self.event_params.data_do_evento:
-            return False
+        if self.event_params.check_date:
+            if participant.data_de_cadastro.date() != self.event_params.data_do_evento:
+                return False
 
-        if not participant.validade_cpf:
-            self.contadores.add_invalido()
-            return False
+        if self.event_params.check_cpf:
+            if not participant.validade_cpf:
+                self.contadores.add_invalido()
+                return False
 
         query_dict = {str(CamposORM.CPF): participant.cpf}
 
-        already_exists = self.__db_con.search(Tabelas.PARTICIPANTES, query_dict)
-        if already_exists is not None:
-            self.contadores.add_repetido()
-            return False
+        if self.event_params.check_only_one:
+            already_exists = self.__db_con.search(Tabelas.PARTICIPANTES, query_dict)
+            if already_exists is not None:
+                self.contadores.add_repetido()
+                return False
 
-        employee = self.__db_con.search(Tabelas.EMPLOYEES, query_dict)
-        if employee is not None:
-            self.contadores.add_colaboradores()
-            return False
+        if self.event_params.check_employee:
+            employee = self.__db_con.search(Tabelas.EMPLOYEES, query_dict)
+            if employee is not None:
+                self.contadores.add_colaboradores()
+                return False
 
-        if (
-            not self.event_params.hora_de_inicio
-            < participant.data_de_cadastro.time()
-            < self.event_params.hora_de_fim
-        ):
-            self.contadores.add_out_of_time()
-            return False
+        if self.event_params.check_time:
+            if (
+                not self.event_params.hora_de_inicio
+                < participant.data_de_cadastro.time()
+                < self.event_params.hora_de_fim
+            ):
+                self.contadores.add_out_of_time()
+                return False
 
         self.contadores.add_valido()
         return True
