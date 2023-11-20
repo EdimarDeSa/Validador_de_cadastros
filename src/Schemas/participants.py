@@ -11,16 +11,16 @@ from ..telefone_celular import TelefoneECelular
 class Participant(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    validade_cpf: Optional[bool] = Field(default=None)
     nome: str = Field(alias='Nome completo')
-    rg: str = Field(alias='RG')
     cpf: str = Field(alias='CPF')
-    data_nasc: str = Field(alias='Data de nascimento')
+    rg: str = Field(alias='RG', default=None)
+    data_nasc: str = Field(alias='Data de nascimento', default=None)
     telefone: str = Field(alias='Telefone')
     email: str = Field(alias='Email')
-    cep: str = Field(alias='CEP')
+    cep: str = Field(alias='CEP', default=None)
     endereco: str = Field(alias='Endereço completo')
-    data_de_cadastro: str = Field(alias='Data', frozen=True)
+    data_de_cadastro: datetime = Field(alias='Data', frozen=True)
+    validade_cpf: Optional[bool] = Field(default=None)
     numero: Optional[int] = Field(default=None)
     bairro: Optional[str] = Field(default=None)
     cidade: Optional[str] = Field(default=None)
@@ -37,33 +37,34 @@ class Participant(BaseModel):
         return nome.title()
 
     @field_validator('cpf')
-    def sanitiza_cpf(cls, value):
+    @classmethod
+    def sanitiza_cpf(cls, value: str) -> str:
         doc = Documento(value, 'CPF')
-        cls.validade_cpf = doc.validade_doc
         return doc.mascara_doc
 
     @field_validator('data_nasc')
     @classmethod
-    def convert_data_nasc(cls, value):
+    def convert_data_nasc(cls, value: str) -> str:
         cleared = DatasBr(data=value, formato_data='%Y-%m-%d')
         return cleared.data
 
     @field_validator('telefone')
     @classmethod
-    def convert_telefone(cls, value):
+    def convert_telefone(cls, value: str) -> str:
         return str(TelefoneECelular(value))
 
     @field_validator('cep')
     @classmethod
-    def sanitiza_cep(cls, value):
+    def sanitiza_cep(cls, value: str) -> str:
         cleared = ''.join([digit for digit in value if digit.isdigit()])
         return cleared.zfill(8)
 
-    @field_validator('data_de_cadastro')
+    @field_validator('data_de_cadastro', mode='before')
     @classmethod
-    def convert_data_de_cadastro(cls, value):
-        cleared = DatasBr(data_e_hora=value)
-        return cleared.data_e_hora
+    def convert_data_de_cadastro(cls, value: str) -> datetime:
+        if 'T' in value:
+            return datetime.fromisoformat(value)
+        return datetime.strptime(value, '%d/%m/%Y %H:%M:%S')
 
     @model_validator(mode='after')
     def validate_cpf(self) -> 'Participant':

@@ -8,6 +8,7 @@ from tinydb import Query, where
 from src.Contracts.serializer import Serializer
 from src.Schemas.counters import Contadores
 from src.Schemas.employee import Employee
+from src.Schemas.event_parameters import EventParameters
 from src.Schemas.participants import Participant, Premio, Sorteio
 from src.Serializers.csvserializer import CsvSerializer
 
@@ -51,7 +52,7 @@ class DataBase:
         return self.__db._opened
 
     def create(self, tabela: Tabelas, data: Participant | Sorteio | Employee) -> int:
-        document = data.model_dump()
+        document = data.model_dump(mode='json', exclude_unset=True)
         return self.__db.table(tabela).insert(document)
 
     def create_multiple(
@@ -87,6 +88,7 @@ class Model:
     def __init__(self) -> None:
         self.__db_con = DataBase()
         self.contadores = Contadores()
+        self.event_params = EventParameters()
 
     def create_participants(self, data: Iterable[dict]) -> Tuple[int]:
         list_of_participants = [Participant(**info) for info in data]
@@ -136,11 +138,17 @@ class Model:
                 raise ValueError('Invalid extension!')
 
     def update_event_date(self, date: str) -> None:
-        self.contadores.update_event_date(date)
+        self.event_params.update_event_date(date)
+
+    def set_hora_inicio(self, value: str) -> None:
+        self.event_params.set_hora_inicio(value)
+
+    def set_hora_fim(self, value: str) -> None:
+        self.event_params.set_hora_fim(value)
 
     def _validate_participants(self, participant: Participant) -> bool:
-        if self.contadores.data_do_evento is None:
-            raise KeyError('É necessário registrar a data do evento')
+        if participant.data_de_cadastro.date() != self.event_params.data_do_evento:
+            return False
 
         if not participant.validade_cpf:
             self.contadores.add_invalido()
@@ -153,9 +161,17 @@ class Model:
             self.contadores.add_repetido()
             return False
 
-        colaborator = self.__db_con.search(Tabelas.EMPLOYEES, query_dict)
-        if colaborator is not None:
+        employee = self.__db_con.search(Tabelas.EMPLOYEES, query_dict)
+        if employee is not None:
             self.contadores.add_colaboradores()
+            return False
+
+        if (
+            not self.event_params.hora_de_inicio
+            < participant.data_de_cadastro.time()
+            < self.event_params.hora_de_fim
+        ):
+            self.contadores.add_out_of_time()
             return False
 
         self.contadores.add_valido()
