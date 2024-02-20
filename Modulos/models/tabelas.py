@@ -1,4 +1,3 @@
-from time import sleep
 from typing import Literal
 
 import pandas as pd
@@ -12,7 +11,6 @@ from Modulos.data_hora_br import *
 from Modulos.funcoes_sanitizacao import *
 from Modulos.imprimir import *
 from Modulos.models.produto import *
-# from Modulos.busca_cep import *
 from Modulos.models.sorteio import *
 
 __all__ = ['Tabelas']
@@ -178,21 +176,21 @@ class Tabelas:
         return self.__tb_inscricoes_validas.value_counts(subset='uf')
 
     @property
-    def get_cidades_dos_inscritos(self):
+    def get_cidades_dos_inscritos(self) -> int:
         return self.__tb_inscricoes_validas.value_counts(subset='localidade')
 
     @property
-    def get_tb_inscricoes_validas(self):
+    def get_tb_inscricoes_validas(self) -> pd.DataFrame:
         return self.__tb_inscricoes_validas
 
     @property
-    def get_tb_vencedores(self):
+    def get_tb_vencedores(self) -> pd.DataFrame:
         return self.__tb_vencedores
 
-    def vencedor_exists(self, cpf: str):
+    def vencedor_exists(self, cpf: str) -> bool:
         return any(self.__tb_inscricoes_validas[CPF] == cpf)
 
-    def busca_vencedor(self, cpf: str):
+    def busca_vencedor(self, cpf: str) -> pd.DataFrame.values:
         cpf = self.__docbr.mask(sanitiza_cpf(cpf))
         dados_vencedor: pd.DataFrame = self.__tb_inscricoes_validas.query(
             f'{CPF}=="{cpf}"'
@@ -203,11 +201,11 @@ class Tabelas:
         self,
         nome_da_tabela: Literal['tb_vencedores', 'tb_inscricoes_validas'],
         caminho: str,
-    ):
+    ) -> str:
         tabela: pd.DataFrame = getattr(self, f'get_{nome_da_tabela}')
         return self.__arquivo.salva_arquivo_filtrado(tabela, caminho, nome_da_tabela)
 
-    def add_sorteio(self, lista_de_sorteios: list[Sorteio]):
+    def add_sorteio(self, lista_de_sorteios: list[Sorteio]) -> None:
         lista_premios = [
             [sorteio.nome_do_sorteio] + premio.valores
             for sorteio in lista_de_sorteios
@@ -224,7 +222,7 @@ class Tabelas:
             sorteios.setdefault(chave, []).append(Produto(*infos))
         return sorteios
 
-    def exportar_relatorio_vencedores(self, lista_de_sorteios: list[Sorteio]):
+    def exportar_relatorio_vencedores(self, lista_de_sorteios: list[Sorteio]) -> None:
         wb = Workbook()
         wb.remove(wb.active)
 
@@ -246,7 +244,7 @@ class Tabelas:
             return
         wb.save(save_path)
 
-    def create_header_style(self):
+    def create_header_style(self) -> NamedStyle:
         header_style = NamedStyle('Header')
         header_style.font = Font(color=BRANCO, bold=True)
         header_style.fill = PatternFill(
@@ -256,7 +254,7 @@ class Tabelas:
         header_style.alignment = Alignment(horizontal=CENTER, vertical=CENTER)
         return header_style
 
-    def create_name_style(self):
+    def create_name_style(self) -> NamedStyle:
         name_style = NamedStyle('NomeParticipante')
         name_style.font = Font(color=PRETO, bold=True)
         name_style.fill = PatternFill(
@@ -265,7 +263,7 @@ class Tabelas:
         name_style.border = self.create_border()
         return name_style
 
-    def create_border(self):
+    def create_border(self) -> Border:
         linha_borda = Side(style='thin', color=PRETO)
         return Border(
             left=linha_borda,
@@ -274,7 +272,8 @@ class Tabelas:
             bottom=linha_borda,
         )
 
-    def set_column_widths(self, ws: worksheet):
+    @staticmethod
+    def set_column_widths(ws: worksheet) -> None:
         columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
         larguras = [17, 50, 17, 55, 11, 17, 22, 21]
 
@@ -336,7 +335,7 @@ class Tabelas:
     def busca_produto(self, codigo: str) -> [pd.Series, None]:
         if self.__tb_produtos is None:
             self.__tb_produtos = self.__arquivo.abre_documento(
-                'Abrirtabela de produtos'
+                'Abrir tabela de produtos'
             )
             try:
                 self.__tb_produtos = pd.read_excel(

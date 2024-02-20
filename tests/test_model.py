@@ -1,7 +1,8 @@
+import datetime
 from pathlib import Path
 
 from src.Models.model import Model
-from src.Schemas.participants import Participant
+from src.Schemas.participants import Participant, Prize, Sorteio
 
 PARTICIPANTE = {
     'Nome completo': 'Edimar Freitas de Sá',
@@ -23,6 +24,7 @@ class TestModel:
     model.update_event_date('28/09/2023')
     model.set_hora_inicio('19:00:00')
     model.set_hora_fim('19:40:00')
+    agora = datetime.datetime.now()
 
     def test_insert_single_participant(self):
         entrada = PARTICIPANTE
@@ -52,11 +54,13 @@ class TestModel:
 
         resultado = self.model.read_participant_by_cpf(entrada)
 
-        esperado = Participant
+        esperado1 = Participant
+        esperado2 = Participant(**PARTICIPANTE)
 
-        comparacao = isinstance(resultado, esperado)
+        comparacao1 = isinstance(resultado, esperado1)
+        comparacao2 = resultado == esperado2
 
-        assert comparacao
+        assert comparacao1 and comparacao2
 
     def test_removing_a_participant(self):
         entrada = '048.245.251-01'
@@ -133,5 +137,96 @@ class TestModel:
         esperado = 3
 
         comparacao = resultado == esperado
+
+        assert comparacao
+
+    def test_search_products_on_table(self):
+        product_table_path = 'C:/Users/Edimar/Documents/GitHub/Validador_de_cadastros/data/Tabela de Preços Distribuição - Novembro V1.xlsx'
+        self.model.read_product_table(product_table_path)
+        entrada = '4750075'
+
+        resultado: Prize = self.model.search_product(entrada)
+
+        esperado1 = isinstance(resultado, Prize)
+        esperado2 = all([
+            resultado.descricao == 'ROTEADOR WIRELESS ACTION RF 1200',
+            resultado.quantidade == 1,
+            resultado.responsavel_cc == 'Marta Rosa Nunes',
+            resultado.centro_de_custos == '25305',
+            resultado.data_fechamento_cc == datetime.date(2023, 12, 26)
+        ])
+
+        comparacao = esperado1 and esperado2
+
+        assert comparacao
+
+    def test_insert_a_sort(self):
+        premio1 = self.model.create_prize(
+            descricao='Câmera VIP 1010',
+            codigo='123123123',
+            quantidade=2,
+            centro_de_custos=': str',
+            data_fechamento_cc=self.agora,
+            responsavel_cc=': str',
+        )
+        premio2 = self.model.create_prize(
+            descricao='Câmera VIP 1010',
+            codigo='123123123',
+            quantidade=2,
+            centro_de_custos=': str',
+            data_fechamento_cc=self.agora,
+            responsavel_cc=': str',
+        )
+
+        sorteio = self.model.create_prize_drawing(
+            nome_do_sorteio='Sorteio 1',
+            dia_do_sorteio='30/11/2023',
+            prizes=[premio1, premio2],
+        )
+
+        assert sorteio == 1
+
+        sorteio2 = self.model.create_prize_drawing(
+            nome_do_sorteio='Sorteio 2',
+            dia_do_sorteio='30/11/2023',
+            prizes=[premio1, premio2],
+        )
+
+        assert sorteio2 == 2
+
+    def test_read_prize_draw(self):
+        entrada = 1
+
+        resultado = self.model.read_prize_draw(entrada)
+
+        esperado1 = Sorteio
+
+        esperado2 = all([
+            resultado.vencedor is None,
+            resultado.dia_do_sorteio == datetime.datetime.fromisoformat("2023-11-30T00:00:00"),
+            resultado.nome_do_sorteio == 'Sorteio 1',
+            resultado.id_sorteio == 1
+        ])
+
+        comparacao1 = isinstance(resultado, esperado1)
+        comparacao2 = esperado2
+
+        assert comparacao1 and comparacao2
+
+    def test_insert_winner(self):
+        entrada = '613.302.483-68'
+
+        self.model.insert_winner(1, entrada)
+
+        resultado = self.model.read_prize_draw(1)
+
+        esperado = all([
+            resultado.vencedor.nome == 'Nailson Rodrigues Silva ',
+            resultado.dia_do_sorteio == datetime.datetime.fromisoformat("2023-11-30T00:00:00"),
+            resultado.nome_do_sorteio == 'Sorteio 1',
+            resultado.id_sorteio == 1
+        ])
+
+        comparacao = esperado
 
         assert comparacao

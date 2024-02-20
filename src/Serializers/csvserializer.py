@@ -1,4 +1,4 @@
-from csv import DictReader, DictWriter, Sniffer
+from csv import DictReader, DictWriter, Sniffer, reader, writer
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -33,7 +33,7 @@ CODECS: list = [
 
 
 class CsvSerializer(Serializer):
-    def read(self, path: Path) -> List[Dict[str, Any]]:
+    def read(self, path: Path):
         for CODEC in CODECS:
             try:
                 with open(path, encoding=CODEC) as file:

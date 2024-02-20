@@ -73,19 +73,19 @@ class Participant(BaseModel):
         return self
 
 
-class Premio(BaseModel):
+class Prize(BaseModel):
     descricao: str
     codigo: str
     quantidade: int
-    centro_de_custosc: str
+    centro_de_custos: str
     data_fechamento_cc: datetime
     responsavel_cc: str
 
 
 class Sorteio(BaseModel):
-    id_sorteio: int
     nome_do_sorteio: str
     dia_do_sorteio: datetime
-    premios: List[Premio]
-    vencedor: Participant
+    premios: List[Prize]
     data_do_registro: datetime
+    vencedor: Optional[Participant] = None
+    id_sorteio: Optional[int] = None

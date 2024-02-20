@@ -1,28 +1,33 @@
+import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Iterable, Optional
 
 import tinydb
 from tinydb import Query, where
+import pandas as pd
 
 from src.Contracts.serializer import Serializer
 from src.Schemas.counters import Contadores
 from src.Schemas.employee import Employee
 from src.Schemas.event_parameters import EventParameters
-from src.Schemas.participants import Participant, Premio, Sorteio
+from src.Schemas.participants import Participant, Prize, Sorteio
 from src.Serializers.csvserializer import CsvSerializer
+from src.Serializers.excelserializer import ExcelSerializer
 
 
 class Tabelas(StrEnum):
+    PRODUTOS = 'temp_produtos'
     PARTICIPANTES = 'temp_participantes'
     SORTEIOS = 'temp_sorteios'
     PERMANENTE = 'registro_permanente_participantes'
-    EMPLOYEES = 'funcionarios'
+    EMPLOYEES = 'temp_funcionarios'
 
 
 class Exten(StrEnum):
     CSV = '.csv'
     TXT = '.txt'
+    XLSX = '.xlsx'
 
 
 class CamposORM(StrEnum):
@@ -43,8 +48,8 @@ class CamposORM(StrEnum):
 
 
 class DataBase:
-    def __init__(self, db_path: str = './db.json') -> None:
-        self.__db = tinydb.TinyDB(db_path)
+    def __init__(self, db_path: Path) -> None:
+        self.__db = tinydb.TinyDB(db_path, indent=2)
 
         self.__reset_temp_infos()
 
@@ -58,13 +63,16 @@ class DataBase:
     def create_multiple(
         self, tabela: Tabelas, datas: Iterable[Participant] | Iterable[Sorteio]
     ) -> Iterable[int]:
-        documents = [info.model_dump() for info in datas]
+        documents = [info.model_dump(mode='json', exclude_unset=True) for info in datas]
         return self.__db.table(tabela).insert_multiple(documents)
 
-    def search(self, tabela: str, query_dict: Dict[str, Any]):
+    def update(self, tabela: Tabelas, new_data: dict, query_dict: dict[str, any]) -> None:
+        self.__db.table(tabela).update(new_data, (Query().fragment(query_dict)))
+
+    def search(self, tabela: str, query_dict: dict[str, any]):
         return self.__db.table(tabela).get(Query().fragment(query_dict))
 
-    def delete(self, table: str, query_dict: Dict[str, Any]) -> Tuple[int]:
+    def delete(self, table: str, query_dict: dict[str, any]) -> tuple[int, ...]:
         items_to_delete = self.__db.table(table).search(Query().fragment(query_dict))
         ids_to_delete = [item.doc_id for item in items_to_delete]
         return tuple(self.__db.table(table).remove(doc_ids=ids_to_delete))
@@ -83,15 +91,29 @@ class DataBase:
 
         self.__reset_temp_infos()
 
+    def next_prize_draw(self) -> int:
+        return len(self.__db.table(Tabelas.SORTEIOS).all()) + 1
+
+    def create_prod_table(self, tabela: Tabelas, data: dict) -> tuple[int, ...]:
+        return tuple(self.__db.table(tabela).insert_multiple(data))
+
 
 class Model:
     def __init__(self) -> None:
-        self.__db_con = DataBase()
+        db_path = Path(__file__).resolve().parent.parent.parent / 'db.json'
+        self.__db_con = DataBase(db_path=db_path)
         self.contadores = Contadores()
         self.event_params = EventParameters()
 
-    def create_participants(self, data: Iterable[dict]) -> Tuple[int]:
-        list_of_participants = [Participant(**info) for info in data]
+    @staticmethod
+    def _create_list_of_participants(chunk: Iterable[dict]) -> list[Participant]:
+        return [Participant(**data) for data in chunk]
+
+    def create_participants(self, data: Iterable[dict]) -> tuple[int]:
+        data = tuple(data)
+
+        list_of_participants = self._create_list_of_participants(data)
+
         inserted = tuple(
             [
                 self.__db_con.create(Tabelas.PARTICIPANTES, participant)
@@ -101,7 +123,7 @@ class Model:
         )
         return inserted
 
-    def create_employees(self, data: Iterable[dict]) -> Tuple[int]:
+    def create_employees(self, data: Iterable[dict]) -> tuple[int]:
         list_of_employees = [Employee(**info) for info in data]
         inserted = tuple(
             [
@@ -111,21 +133,60 @@ class Model:
         )
         return inserted
 
+    def create_prize(
+        self,
+        descricao: str,
+        codigo: str,
+        quantidade: int,
+        centro_de_custos: str,
+        data_fechamento_cc: datetime,
+        responsavel_cc: str,
+    ) -> Prize:
+        kwargs = dict(
+            descricao=descricao,
+            codigo=codigo,
+            quantidade=quantidade,
+            centro_de_custos=centro_de_custos,
+            data_fechamento_cc=data_fechamento_cc,
+            responsavel_cc=responsavel_cc,
+        )
+        return Prize(**kwargs)
+
+    def create_prize_drawing(self, nome_do_sorteio: str, dia_do_sorteio: str, prizes: list[Prize]) -> int:
+        sorteio = Sorteio(
+            id_sorteio=self.__db_con.next_prize_draw(),
+            nome_do_sorteio=nome_do_sorteio,
+            dia_do_sorteio=datetime.datetime.strptime(dia_do_sorteio, '%d/%m/%Y').date(),
+            premios=prizes,
+            data_do_registro=datetime.datetime.now().date(),
+        )
+
+        id_ = self.__db_con.create(Tabelas.SORTEIOS, sorteio)
+
+        return id_
+
     def read_participant_by_cpf(self, cpf: str) -> Optional[Participant]:
         data = self.__db_con.search(Tabelas.PARTICIPANTES, {str(CamposORM.CPF): cpf})
         if data:
             return Participant(**data)
         return None
 
-    def delete_participant_by_cpf(self, cpf: str) -> Optional[Tuple[int]]:
+    def read_prize_draw(self, id_sorteio: int) -> Sorteio:
+        data = self.__db_con.search(
+            Tabelas.SORTEIOS,
+            {'id_sorteio': id_sorteio}
+        )
+        return Sorteio(**data)
+
+    def delete_participant_by_cpf(self, cpf: str) -> Optional[tuple[int]]:
         id_ = self.__db_con.delete(Tabelas.PARTICIPANTES, {str(CamposORM.CPF): cpf})
         if id_:
             self.contadores.decrement_valido()
         return id_
 
-    def read_file(self, file_path: Path) -> Any:
+    def read_file(self, file_path: Path, **kwargs) -> any:
         serializer = self._select_serializer(file_path.suffix)
-        return serializer.read(file_path)
+        return serializer.read(file_path, **kwargs)
 
     @staticmethod
     def _select_serializer(extension: str) -> Serializer:
@@ -134,6 +195,8 @@ class Model:
                 return CsvSerializer()
             case Exten.TXT:
                 return CsvSerializer()
+            case Exten.XLSX:
+                return ExcelSerializer()
             case _:
                 raise ValueError('Invalid extension!')
 
@@ -182,5 +245,34 @@ class Model:
         self.contadores.add_valido()
         return True
 
+    # TODO: Criar os sorteios
+    # TODO: Criar os produtos
+
     def close(self):
         self.__db_con.close()
+
+    def insert_winner(self, id_sorteio: int, cpf: str):
+        sorteio = self.read_prize_draw(id_sorteio)
+        winner = self.read_participant_by_cpf(cpf)
+
+        sorteio.vencedor = winner
+
+        self.__db_con.update(
+            Tabelas.SORTEIOS,
+            sorteio.model_dump(mode='json', exclude_unset=True),
+            {'id_sorteio': id_sorteio}
+        )
+
+    def read_product_table(self, path: str) -> None:
+        if not path:
+            return
+
+        path = Path(path).resolve()
+        prod_df: pd.DataFrame = self.read_file(path, sheet_name=0, header=6, usecols=[2, 3])
+
+        e = self.__db_con.create_prod_table(
+            Tabelas.PRODUTOS,
+            prod_df.to_json()
+        )
+
+        print(e)
