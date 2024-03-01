@@ -144,8 +144,7 @@ class JanelaSorteios(JanelaPadrao):
         Button(self.top, text="Limpar", command=self.limpa_formulario_de_produto).place(x=500, y=210, width=160)
 
     def limpa_formulario_de_produto(self):
-        campos = ['campo_codigo', 'campo_nome_do_produto', 'campo_quantidade',
-                  'campo_centro_de_custos', 'campo_responsavel_pelo_cc']
+        campos = ['campo_codigo', 'campo_nome_do_produto', 'campo_quantidade']
         for campo in campos:
             self.top.children.get(campo).delete(0, END)
         self.top.children.get( 'campo_data_de_fechamento_cc').entry.delete(0, END)
@@ -220,8 +219,12 @@ class JanelaSorteios(JanelaPadrao):
             self.tabela_de_produtos.get_row(iid=iid).values = valores
 
         self.tabela_de_produtos.load_table_data()
+
         if continuar == 'Sim':
             self.limpa_formulario_de_produto()
+
+            self.top.children.get(codigo).focus_set()
+            return
 
         self.fechar_formulario_de_produto()
 
